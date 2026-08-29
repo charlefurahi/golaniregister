@@ -1,77 +1,83 @@
+```vue
 <template>
   <main class="auth-page">
     <section class="auth-card">
 
       <!-- Church Logo -->
-  <div class="footer__logo">
-    <div class="footer__logo-icon">
-      <img
-        :src="logo"
-        alt="Golani SDA Church"
-        class="church-logo"
-      />
-    </div>
-  </div>
+      <div class="church-brand">
+        <div class="church-logo-wrap">
+          <img
+            :src="logo"
+            alt="Nembo ya Kanisa la Golani SDA"
+            class="church-logo"
+          />
+        </div>
+      </div>
 
-  <!-- Header -->
-  <div class="auth-header">
-    <p class="eyebrow">GOLANI SDA CHURCH</p>
+      <!-- Header -->
+      <div class="auth-header">
+        <p class="eyebrow">GOLANI SDA CHURCH</p>
 
-    <h1>Admin Registration Portal</h1>
+        <h1>Usajili wa Wakazi</h1>
 
-    <p class="muted">
-      Sign in to register and manage resident information.
-    </p>
-  </div>
+        <p class="muted">
+          Ingia kwenye mfumo kusajili na kusimamia taarifa za wakazi wa kanisa.
+        </p>
+      </div>
 
-  <!-- Login Form -->
-  <form @submit.prevent="login" class="form-stack">
+      <!-- Login Form -->
+      <form
+        class="form-stack"
+        @submit.prevent="login"
+      >
+        <label>
+          <span>Barua pepe</span>
 
-    <label>
-      <span>Email</span>
+          <input
+            v-model.trim="email"
+            type="email"
+            autocomplete="username"
+            required
+            placeholder="admin@example.com"
+          />
+        </label>
 
-      <input
-        v-model.trim="email"
-        type="email"
-        autocomplete="username"
-        required
-        placeholder="admin@example.com"
-      />
-    </label>
+        <label>
+          <span>Nenosiri</span>
 
-    <label>
-      <span>Password</span>
+          <input
+            v-model="password"
+            type="password"
+            autocomplete="current-password"
+            required
+            placeholder="••••••••"
+          />
+        </label>
 
-      <input
-        v-model="password"
-        type="password"
-        autocomplete="current-password"
-        required
-        placeholder="••••••••"
-      />
-    </label>
+        <p
+          v-if="error"
+          class="error"
+          role="alert"
+        >
+          {{ error }}
+        </p>
 
-    <p v-if="error" class="error">
-      {{ error }}
-    </p>
+        <button
+          class="primary-button"
+          type="submit"
+          :disabled="loading"
+        >
+          {{ loading ? 'Inaingia…' : 'Ingia kwenye mfumo' }}
+        </button>
+      </form>
 
-    <button
-      class="primary-button"
-      type="submit"
-      :disabled="loading"
-    >
-      {{ loading ? 'Signing in…' : 'Sign in' }}
-    </button>
-
-  </form>
-
-  <div class="security-note">
-    <span class="security-dot"></span>
-    Authorized administrators only
-  </div>
+      <!-- Security Notice -->
+      <div class="security-note">
+        <span class="security-dot"></span>
+        Mfumo huu unapatikana kwa wasimamizi walioidhinishwa pekee
+      </div>
 
     </section>
-
   </main>
 </template>
 
@@ -100,7 +106,7 @@ async function login() {
   loading.value = false
 
   if (authError) {
-    error.value = authError.message
+    error.value = 'Barua pepe au nenosiri si sahihi.'
     return
   }
 
@@ -115,6 +121,7 @@ async function login() {
 
 .auth-page {
   min-height: 100vh;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -153,10 +160,10 @@ async function login() {
 
 
 /* ================================
-   LOGO
+   CHURCH BRAND
 ================================ */
 
-.footer__logo {
+.church-brand {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -164,7 +171,7 @@ async function login() {
   margin-bottom: 22px;
 }
 
-.footer__logo-icon {
+.church-logo-wrap {
   width: 94px;
   height: 94px;
 
@@ -188,8 +195,9 @@ async function login() {
   width: 74px;
   height: 74px;
 
-  object-fit: contain;
   display: block;
+
+  object-fit: contain;
 }
 
 
@@ -199,6 +207,7 @@ async function login() {
 
 .auth-header {
   text-align: center;
+
   margin-bottom: 30px;
 }
 
@@ -211,6 +220,7 @@ async function login() {
   font-weight: 800;
 
   letter-spacing: 0.16em;
+
   text-transform: uppercase;
 }
 
@@ -246,12 +256,14 @@ async function login() {
 .form-stack {
   display: flex;
   flex-direction: column;
+
   gap: 20px;
 }
 
 .form-stack label {
   display: flex;
   flex-direction: column;
+
   gap: 8px;
 
   color: #0d2137;
@@ -263,6 +275,8 @@ async function login() {
 .form-stack input {
   width: 100%;
   height: 48px;
+
+  box-sizing: border-box;
 
   padding: 0 14px;
 
@@ -362,6 +376,7 @@ async function login() {
 
 .primary-button:disabled {
   opacity: 0.65;
+
   cursor: not-allowed;
 }
 
@@ -374,6 +389,7 @@ async function login() {
   display: flex;
   align-items: center;
   justify-content: center;
+
   gap: 7px;
 
   margin-top: 24px;
@@ -382,11 +398,15 @@ async function login() {
 
   font-size: 12px;
   font-weight: 600;
+
+  text-align: center;
 }
 
 .security-dot {
   width: 7px;
   height: 7px;
+
+  flex: 0 0 auto;
 
   background: #0d2137;
 
@@ -409,7 +429,7 @@ async function login() {
     border-radius: 16px;
   }
 
-  .footer__logo-icon {
+  .church-logo-wrap {
     width: 84px;
     height: 84px;
   }
@@ -422,5 +442,10 @@ async function login() {
   .auth-header h1 {
     font-size: 24px;
   }
+
+  .security-note {
+    line-height: 1.5;
+  }
 }
 </style>
+```
