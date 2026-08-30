@@ -969,12 +969,12 @@ function normalizeValue(value) {
   return String(value || '')
     .trim()
     .toLowerCase()
-    .replace(/\\s+/g, ' ')
+    .replace(/\s+/g, ' ')
 }
 
 function normalizePhone(value) {
   return String(value || '')
-    .replace(/\\D/g, '')
+    .replace(/\D/g, '')
 }
 
 function isSamePerson(a, b) {
@@ -1504,7 +1504,14 @@ function childrenToText(children) {
     return ''
   }
   return children
-    .map((child) => (child.age !== null && child.age !== undefined && child.age !== '' ? `${child.name} (${child.age})` : child.name))
+    .map((child) => {
+      const name = child.full_name || child.name || ''
+      const age = child.date_of_birth
+        ? calculateAge(child.date_of_birth)
+        : (child.age !== null && child.age !== undefined && child.age !== '' ? `${child.age} yrs` : '')
+      return age ? `${name} (${age})` : name
+    })
+    .filter(Boolean)
     .join('; ')
 }
 
@@ -1584,10 +1591,11 @@ function exportExcel() {
   const columnWidths = [
     25, 13, 16, 8, 18, 16, 26, 26,
     12, 14, 22, 22, 20, 12,
-    22, 16, 22, 16, 16, 18, 24, 18, 16,
+    22, 16, 22, 16, 16, 18, 24, 18, 16, 16, 18, 22, 24,
     30, 30,
     20, 18,
     12, 18, 22, 26, 24,
+    46, 46,
     38, 22,
   ]
 
@@ -2227,6 +2235,16 @@ function exportExcel() {
 ========================================================= */
 
 .family-members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Wrapper for the child/family-member cards inside the member-detail
+   modal (3b/3c). Used in the template but had no rule at all before —
+   same spacing pattern as .family-members-list above. */
+.children-details,
+.family-details-list {
   display: flex;
   flex-direction: column;
   gap: 12px;

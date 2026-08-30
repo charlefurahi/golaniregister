@@ -1,4 +1,3 @@
-```vue
 <template>
   <main class="auth-page">
     <section class="auth-card">
@@ -18,7 +17,7 @@
       <div class="auth-header">
         <p class="eyebrow">GOLANI SDA CHURCH</p>
 
-        <h1>Usajili wa Wakazi</h1>
+        <h1>Usajili wa Washiriki na Waumini</h1>
 
         <p class="muted">
           Ingia kwenye mfumo kusajili na kusimamia taarifa za wakazi wa kanisa.
@@ -448,4 +447,3 @@ async function login() {
   }
 }
 </style>
-```
