@@ -140,7 +140,7 @@
 
         <label>
           <span>Tarehe ya kuzaliwa</span>
-          <input v-model="form.date_of_birth" type="date" / required>
+          <input v-model="form.date_of_birth" type="date" required />
         </label>
 
         <label>
