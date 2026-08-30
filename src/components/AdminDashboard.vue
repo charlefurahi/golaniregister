@@ -126,7 +126,7 @@
 
         <label>
           <span>Jina kamili <b>*</b></span>
-          <input v-model.trim="form.full_name" required placeholder="Andika jina kamili" />
+          <input v-model.trim="form.full_name" required placeholder="Andika jina kamili" @blur="upperize(form, 'full_name')" />
         </label>
 
         <label>
@@ -151,7 +151,7 @@
             <option value="Hajaoa/Hajaolewa">Hajaoa/Hajaolewa</option>
             <option value="Ameoa/Ameolewa">Ameoa/Ameolewa</option>
             <option value="Mjane">Mjane</option>
-            <option value="Mjane wa kiume">Mjane wa kiume</option>
+            <option value="Mgane">Mgane</option>
             <option value="Talaka">Talaka</option>
           </select>
         </label>
@@ -168,7 +168,7 @@
 
         <label class="span-2">
           <span>Anwani/Makazi</span>
-          <input v-model.trim="form.residence" placeholder="Mtaa, Kata, Jiji — Mfano: Miono, Msata, Dodoma" />
+          <input v-model.trim="form.residence" placeholder="Mtaa, Kata, Jiji — Mfano: Miono, Msata, Dodoma" @blur="upperize(form, 'residence')" />
         </label>
 
 
@@ -203,18 +203,18 @@
 
             <label>
               <span>Kanisa ulipobatizwa</span>
-              <input v-model.trim="form.baptism_place" placeholder="Mfano: Golani SDA Church" />
+              <input v-model.trim="form.baptism_place" placeholder="Mfano: Golani SDA Church" @blur="upperize(form, 'baptism_place')" />
             </label>
               <label>
                 <span>Ushirika ulipo</span>
-                <input v-model.trim="form.church_area" placeholder="Mfano: Golani SDA" />
+                <input v-model.trim="form.church_area" placeholder="Mfano: Golani SDA" @blur="upperize(form, 'church_area')" />
               </label>
           </div>
         </template>
 
         <label>
           <span>Idara/Kikundi alichopo</span>
-          <input v-model.trim="form.ministry_group" list="ministry-group-options" placeholder="Mfano: Kwaya, Vijana, Dorkas" />
+          <input v-model.trim="form.ministry_group" list="ministry-group-options" placeholder="Mfano: Kwaya, Vijana, Dorkas" @blur="upperize(form, 'ministry_group')" />
           <datalist id="ministry-group-options">
             <option value="Kwaya" />
             <option value="Vijana" />
@@ -254,7 +254,7 @@
 
           <label>
             <span>Jina kamili la Mwenzi</span>
-            <input v-model.trim="form.spouse.full_name" placeholder="Jina kamili la mwenzi" />
+            <input v-model.trim="form.spouse.full_name" placeholder="Jina kamili la mwenzi" @blur="upperize(form.spouse, 'full_name')" />
           </label>
 
           <label>
@@ -312,18 +312,18 @@
 
               <label>
                 <span>Mahali alipobatizwa (Mwenzi)</span>
-                <input v-model.trim="form.spouse.baptism_place" placeholder="Mfano: Golani SDA Church" />
+                <input v-model.trim="form.spouse.baptism_place" placeholder="Mfano: Golani SDA Church" @blur="upperize(form.spouse, 'baptism_place')" />
               </label>
                 <label>
                   <span>Ushirika ulipo (Mwenzi)</span>
-                  <input v-model.trim="form.spouse.church_area" placeholder="Mfano: Golani SDA" />
+                  <input v-model.trim="form.spouse.church_area" placeholder="Mfano: Golani SDA" @blur="upperize(form.spouse, 'church_area')" />
                 </label>
             </div>
           </template>
 
           <label>
             <span>Idara/Kikundi (Mwenzi)</span>
-            <input v-model.trim="form.spouse.ministry_group" list="ministry-group-options" placeholder="Mfano: Kwaya, Vijana, Dorkas" />
+            <input v-model.trim="form.spouse.ministry_group" list="ministry-group-options" placeholder="Mfano: Kwaya, Vijana, Dorkas" @blur="upperize(form.spouse, 'ministry_group')" />
           </label>
 
           <label>
@@ -339,7 +339,7 @@
 
           <label>
             <span>Mahitaji Maalum (Mwenzi)</span>
-            <input v-model.trim="form.spouse.special_needs" placeholder="Mfano: Anahitaji msaada maalum" />
+            <input v-model.trim="form.spouse.special_needs" placeholder="Mfano: Anahitaji msaada maalum" @blur="upperize(form.spouse, 'special_needs')" />
           </label>
 
           <!-- ---------- Mwenzi: Taarifa za Ziada ---------- -->
@@ -355,18 +355,18 @@
 
           <label v-if="form.spouse.is_tucasa_member">
             <span>Chuo anachosoma (Mwenzi)</span>
-            <input v-model.trim="form.spouse.institution_name" placeholder="Mfano: UDSM, NIT, SUA, MUHAS" />
+            <input v-model.trim="form.spouse.institution_name" placeholder="Mfano: UDSM, NIT, SUA, MUHAS" @blur="upperize(form.spouse, 'institution_name')" />
           </label>
           <div v-else></div>
 
           <label>
             <span>Elimu/Kazi (Mwenzi)</span>
-            <input v-model.trim="form.spouse.occupation" placeholder="Mfano: Mwalimu, Mfanyabiashara" />
+            <input v-model.trim="form.spouse.occupation" placeholder="Mfano: Mwalimu, Mfanyabiashara" @blur="upperize(form.spouse, 'occupation')" />
           </label>
 
           <label>
             <span>Vipaji/Mahususi (Mwenzi)</span>
-            <input v-model.trim="form.spouse.skills" placeholder="Mfano: Muziki, Ufundishaji, Upishi" />
+            <input v-model.trim="form.spouse.skills" placeholder="Mfano: Muziki, Ufundishaji, Upishi" @blur="upperize(form.spouse, 'skills')" />
           </label>
 
           <!-- ---------- Watoto ---------- -->
@@ -386,22 +386,22 @@
                 <button type="button" class="child-remove" title="Ondoa mtoto" @click="removeChild(index)">✕</button>
               </div>
               <div class="family-member-grid">
-                <input v-model.trim="child.full_name" placeholder="Jina kamili *" />
+                <input v-model.trim="child.full_name" placeholder="Jina kamili *" @blur="upperize(child, 'full_name')" />
                 <select v-model="child.gender"><option value="">Jinsia</option><option value="Mwanaume">Mwanaume</option><option value="Mwanamke">Mwanamke</option></select>
                 <input v-model="child.date_of_birth" type="date" />
                 <input v-model.trim="child.phone_number" type="tel" placeholder="Namba ya simu" />
                 <input v-model.trim="child.email" type="email" placeholder="Barua pepe" />
-                <input v-model.trim="child.residence" placeholder="Anwani/Makazi" />
+                <input v-model.trim="child.residence" placeholder="Anwani/Makazi" @blur="upperize(child, 'residence')" />
                 <div class="subsection-label span-2">Taarifa za Kiroho / Kanisa za Mtoto</div>
                 <label><span>Amebatizwa?</span><select v-model="child.is_baptized"><option :value="false">Hapana</option><option :value="true">Ndiyo</option></select></label>
                 <template v-if="child.is_baptized">
                   <label><span>Mwaka wa ubatizo</span><input v-model="child.baptism_year" type="number" min="1900" :max="currentYear" /></label>
-                  <label><span>Kanisa alikobatiziwa</span><input v-model.trim="child.baptism_place" placeholder="Mfano: Golani SDA Church" /></label>
-                  <label><span>Ushirika ulipo</span><input v-model.trim="child.church_area" placeholder="Mfano: Golani SDA" /></label>
+                  <label><span>Kanisa alikobatiziwa</span><input v-model.trim="child.baptism_place" placeholder="Mfano: Golani SDA Church" @blur="upperize(child, 'baptism_place')" /></label>
+                  <label><span>Ushirika ulipo</span><input v-model.trim="child.church_area" placeholder="Mfano: Golani SDA" @blur="upperize(child, 'church_area')" /></label>
                 </template>
-                <label><span>Idara/Kikundi</span><input v-model.trim="child.ministry_group" list="ministry-group-options" /></label>
+                <label><span>Idara/Kikundi</span><input v-model.trim="child.ministry_group" list="ministry-group-options" @blur="upperize(child, 'ministry_group')" /></label>
                 <label><span>Wadhifa</span><select v-model="child.church_role"><option value="">Chagua wadhifa</option><option value="Mshiriki">Mshiriki</option><option value="Kiongozi">Kiongozi</option></select></label>
-                <label class="span-2"><span>Mahitaji Maalum</span><input v-model.trim="child.special_needs" placeholder="Mfano: Anahitaji msaada maalum" /></label>
+                <label class="span-2"><span>Mahitaji Maalum</span><input v-model.trim="child.special_needs" placeholder="Mfano: Anahitaji msaada maalum" @blur="upperize(child, 'special_needs')" /></label>
 
                 <div class="subsection-label span-2">Taarifa za Ziada za Mtoto</div>
                 <label>
@@ -413,16 +413,16 @@
                 </label>
                 <label v-if="child.is_tucasa_member">
                   <span>Chuo anachosoma</span>
-                  <input v-model.trim="child.institution_name" placeholder="Mfano: UDSM, NIT, SUA, MUHAS" />
+                  <input v-model.trim="child.institution_name" placeholder="Mfano: UDSM, NIT, SUA, MUHAS" @blur="upperize(child, 'institution_name')" />
                 </label>
                 <div v-else></div>
                 <label>
                   <span>Elimu/Kazi</span>
-                  <input v-model.trim="child.occupation" placeholder="Mfano: Mwanafunzi, Mwalimu" />
+                  <input v-model.trim="child.occupation" placeholder="Mfano: Mwanafunzi, Mwalimu" @blur="upperize(child, 'occupation')" />
                 </label>
                 <label>
                   <span>Vipaji/Mahususi</span>
-                  <input v-model.trim="child.skills" placeholder="Mfano: Muziki, Uchoraji, Michezo" />
+                  <input v-model.trim="child.skills" placeholder="Mfano: Muziki, Uchoraji, Michezo" @blur="upperize(child, 'skills')" />
                 </label>
               </div>
             </div>
@@ -440,23 +440,23 @@
               <button type="button" class="child-remove" title="Ondoa mwanafamilia" @click="removeFamilyMember(index)">✕</button>
             </div>
             <div class="family-member-grid">
-              <input v-model.trim="member.full_name" placeholder="Jina kamili *" />
-              <input v-model.trim="member.relationship" list="relationship-options" placeholder="Uhusiano — Mfano: Baba, Kaka" />
+              <input v-model.trim="member.full_name" placeholder="Jina kamili *" @blur="upperize(member, 'full_name')" />
+              <input v-model.trim="member.relationship" list="relationship-options" placeholder="Uhusiano — Mfano: Baba, Kaka" @blur="upperize(member, 'relationship')" />
               <select v-model="member.gender"><option value="">Jinsia</option><option value="Mwanaume">Mwanaume</option><option value="Mwanamke">Mwanamke</option></select>
               <input v-model="member.date_of_birth" type="date" />
               <input v-model.trim="member.phone_number" type="tel" placeholder="Namba ya simu" />
               <input v-model.trim="member.email" type="email" placeholder="Barua pepe" />
-              <input v-model.trim="member.residence" placeholder="Anwani/Makazi" />
+              <input v-model.trim="member.residence" placeholder="Anwani/Makazi" @blur="upperize(member, 'residence')" />
               <div class="subsection-label span-2">Taarifa za Kiroho / Kanisa za Mwanafamilia</div>
               <label><span>Amebatizwa?</span><select v-model="member.is_baptized"><option :value="false">Hapana</option><option :value="true">Ndiyo</option></select></label>
               <template v-if="member.is_baptized">
                 <label><span>Mwaka wa ubatizo</span><input v-model="member.baptism_year" type="number" min="1900" :max="currentYear" /></label>
-                <label><span>Kanisa alikobatiziwa</span><input v-model.trim="member.baptism_place" /></label>
-                <label><span>Ushirika ulipo</span><input v-model.trim="member.church_area" /></label>
+                <label><span>Kanisa alikobatiziwa</span><input v-model.trim="member.baptism_place" @blur="upperize(member, 'baptism_place')" /></label>
+                <label><span>Ushirika ulipo</span><input v-model.trim="member.church_area" @blur="upperize(member, 'church_area')" /></label>
               </template>
-              <label><span>Idara/Kikundi</span><input v-model.trim="member.ministry_group" list="ministry-group-options" /></label>
+              <label><span>Idara/Kikundi</span><input v-model.trim="member.ministry_group" list="ministry-group-options" @blur="upperize(member, 'ministry_group')" /></label>
               <label><span>Wadhifa</span><select v-model="member.church_role"><option value="">Chagua wadhifa</option><option value="Mshiriki">Mshiriki</option><option value="Kiongozi">Kiongozi</option><option value="Mchungaji">Mchungaji</option><option value="Mzee">Mzee</option></select></label>
-              <label class="span-2"><span>Mahitaji Maalum</span><input v-model.trim="member.special_needs" placeholder="Mfano: Anahitaji msaada maalum" /></label>
+              <label class="span-2"><span>Mahitaji Maalum</span><input v-model.trim="member.special_needs" placeholder="Mfano: Anahitaji msaada maalum" @blur="upperize(member, 'special_needs')" /></label>
 
               <div class="subsection-label span-2">Taarifa za Ziada za Mwanafamilia</div>
               <label>
@@ -468,16 +468,16 @@
               </label>
               <label v-if="member.is_tucasa_member">
                 <span>Chuo anachosoma</span>
-                <input v-model.trim="member.institution_name" placeholder="Mfano: UDSM, NIT, SUA, MUHAS" />
+                <input v-model.trim="member.institution_name" placeholder="Mfano: UDSM, NIT, SUA, MUHAS" @blur="upperize(member, 'institution_name')" />
               </label>
               <div v-else></div>
               <label>
                 <span>Elimu/Kazi</span>
-                <input v-model.trim="member.occupation" placeholder="Mfano: Mwanafunzi, Mwalimu" />
+                <input v-model.trim="member.occupation" placeholder="Mfano: Mwanafunzi, Mwalimu" @blur="upperize(member, 'occupation')" />
               </label>
               <label>
                 <span>Vipaji/Mahususi</span>
-                <input v-model.trim="member.skills" placeholder="Mfano: Muziki, Uchoraji, Michezo" />
+                <input v-model.trim="member.skills" placeholder="Mfano: Muziki, Uchoraji, Michezo" @blur="upperize(member, 'skills')" />
               </label>
             </div>
           </div>
@@ -501,7 +501,7 @@
 
         <label>
           <span>Mtu wa karibu wa kuwasiliana nae ikiwa sipatikani — Jina</span>
-          <input v-model.trim="form.emergency_contact_name" placeholder="Jina la mtu wa dharura" />
+          <input v-model.trim="form.emergency_contact_name" placeholder="Jina la mtu wa dharura" @blur="upperize(form, 'emergency_contact_name')" />
         </label>
 
         <label>
@@ -526,23 +526,23 @@
 
         <label v-if="form.is_tucasa_member">
           <span>Chuo anachosoma</span>
-          <input v-model.trim="form.institution_name" placeholder="Mfano: UDSM, NIT, SUA, MUHAS" />
+          <input v-model.trim="form.institution_name" placeholder="Mfano: UDSM, NIT, SUA, MUHAS" @blur="upperize(form, 'institution_name')" />
         </label>
         <div v-else></div>
 
         <label>
           <span>Elimu/Kazi</span>
-          <input v-model.trim="form.occupation" placeholder="Mfano: Mwalimu" />
+          <input v-model.trim="form.occupation" placeholder="Mfano: Mwalimu" @blur="upperize(form, 'occupation')" />
         </label>
 
         <label>
           <span>Vipaji/Mahususi</span>
-          <input v-model.trim="form.skills" placeholder="Mfano: Upigaji piano, Ufundishaji, Upishi" />
+          <input v-model.trim="form.skills" placeholder="Mfano: Upigaji piano, Ufundishaji, Upishi" @blur="upperize(form, 'skills')" />
         </label>
 
         <label class="span-2">
           <span>Mahitaji Maalum</span>
-          <input v-model.trim="form.special_needs" placeholder="Mfano: Mgonjwa, Mlemavu, Anahitaji msaada" />
+          <input v-model.trim="form.special_needs" placeholder="Mfano: Mgonjwa, Mlemavu, Anahitaji msaada" @blur="upperize(form, 'special_needs')" />
         </label>
 
 
@@ -870,6 +870,33 @@ const currentYear = new Date().getFullYear()
 
 
 /* =========================================================
+   UPPERCASE HELPER
+   Applied to free-text fields only — never to email, phone
+   numbers, dates, or fields driven by a fixed <select> list.
+========================================================= */
+
+function toUpper(value) {
+  return typeof value === 'string' && value ? value.toUpperCase() : value
+}
+
+/* =========================================================
+   LIVE UPPERCASE ON BLUR
+   Same field list as toUpper() above — the moment the admin
+   leaves a free-text field, force it to uppercase right in
+   the form, so what's on screen already matches what will be
+   saved. toUpper() at save time stays in place as a safety
+   net (covers values that arrive already in the model, e.g.
+   from autofill, without ever firing blur).
+========================================================= */
+
+function upperize(target, key) {
+  if (typeof target[key] === 'string' && target[key]) {
+    target[key] = target[key].toUpperCase()
+  }
+}
+
+
+/* =========================================================
    FORM
 ========================================================= */
 
@@ -1021,6 +1048,228 @@ async function findDuplicateMember(payload) {
   }) || null
 }
 
+/* =========================================================
+   FAMILY AUTO-LINKING
+
+   We keep the original family structure:
+     resident.spouse
+     resident.children[]
+     resident.family_members[]
+
+   A person can therefore be entered in either order:
+
+   1. Family head enters spouse/child/member first, then that person
+      later registers personally.
+   2. Person registers personally first, then the family head enters
+      that person in the family section.
+
+   In both cases Vue connects the two records instead of creating a
+   second unrelated family person.
+========================================================= */
+
+function familyPersonMatchScore(a, b) {
+  if (!a || !b) return 0
+
+  const nameA = normalizeValue(a.full_name)
+  const nameB = normalizeValue(b.full_name)
+  if (!nameA || !nameB || nameA !== nameB) return 0
+
+  const phoneA = normalizePhone(a.phone_number)
+  const phoneB = normalizePhone(b.phone_number)
+  const emailA = normalizeValue(a.email)
+  const emailB = normalizeValue(b.email)
+  const dobA = String(a.date_of_birth || '').trim()
+  const dobB = String(b.date_of_birth || '').trim()
+
+  // If both sides have the same identifying field, it strengthens the match.
+  let score = 10
+
+  if (phoneA && phoneB) {
+    if (phoneA !== phoneB) return 0
+    score += 30
+  }
+
+  if (emailA && emailB) {
+    if (emailA !== emailB) return 0
+    score += 30
+  }
+
+  if (dobA && dobB) {
+    if (dobA !== dobB) return 0
+    score += 20
+  }
+
+  return score
+}
+
+function findNestedFamilyPlaceholder(person) {
+  const matches = []
+
+  for (const resident of residents.value) {
+    // A person's own row is not a family placeholder for themselves.
+    if (editing.value && resident.id === editing.value.id) continue
+
+    if (resident.spouse && typeof resident.spouse === 'object') {
+      const score = familyPersonMatchScore(person, resident.spouse)
+      if (score > 0) {
+        matches.push({
+          parent: resident,
+          type: 'spouse',
+          index: null,
+          person: resident.spouse,
+          score,
+        })
+      }
+    }
+
+    if (Array.isArray(resident.children)) {
+      resident.children.forEach((child, index) => {
+        const score = familyPersonMatchScore(person, child)
+        if (score > 0) {
+          matches.push({
+            parent: resident,
+            type: 'child',
+            index,
+            person: child,
+            score,
+          })
+        }
+      })
+    }
+
+    if (Array.isArray(resident.family_members)) {
+      resident.family_members.forEach((member, index) => {
+        const score = familyPersonMatchScore(person, member)
+        if (score > 0) {
+          matches.push({
+            parent: resident,
+            type: 'family_member',
+            index,
+            person: member,
+            score,
+          })
+        }
+      })
+    }
+  }
+
+  if (!matches.length) return null
+
+  matches.sort((a, b) => b.score - a.score)
+  return matches[0]
+}
+
+function cleanFamilyLinkData(person, residentId, role) {
+  const baptized = !!person.is_baptized
+
+  return {
+    ...person,
+    resident_id: residentId,
+    family_linked: true,
+    family_role: role,
+    full_name: toUpper((person.full_name || '').trim()),
+    gender: person.gender || null,
+    date_of_birth: person.date_of_birth || null,
+    phone_number: (person.phone_number || '').trim() || null,
+    email: (person.email || '').trim() || null,
+    residence: toUpper((person.residence || '').trim()) || null,
+    is_baptized: baptized,
+    baptism_year: baptized && person.baptism_year ? Number(person.baptism_year) : null,
+    baptism_place: baptized ? (toUpper((person.baptism_place || '').trim()) || null) : null,
+    church_area: baptized ? (toUpper((person.church_area || '').trim()) || null) : null,
+    ministry_group: toUpper((person.ministry_group || '').trim()) || null,
+    church_role: person.church_role || null,
+    special_needs: toUpper((person.special_needs || '').trim()) || null,
+    is_tucasa_member: !!person.is_tucasa_member,
+    institution_name: person.is_tucasa_member ? (toUpper((person.institution_name || '').trim()) || null) : null,
+    occupation: toUpper((person.occupation || '').trim()) || null,
+    skills: toUpper((person.skills || '').trim()) || null,
+  }
+}
+
+async function updateNestedFamilyPlaceholder(match, personalResident) {
+  if (!match?.parent?.id || !personalResident?.id) {
+    return { success: false, error: 'Mshiriki wa familia hakupatikana.' }
+  }
+
+  const role = match.type === 'spouse'
+    ? 'SPOUSE'
+    : match.type === 'child'
+      ? 'CHILD'
+      : 'MEMBER'
+
+  const linked = cleanFamilyLinkData(personalResident, personalResident.id, role)
+
+  // Keep the relationship entered by the family head.
+  if (match.type === 'family_member') {
+    linked.relationship = match.person.relationship || linked.relationship || null
+  }
+
+  const updatePayload = {}
+
+  if (match.type === 'spouse') {
+    updatePayload.spouse = linked
+  }
+
+  if (match.type === 'child') {
+    const children = Array.isArray(match.parent.children)
+      ? [...match.parent.children]
+      : []
+    children[match.index] = linked
+    updatePayload.children = children
+  }
+
+  if (match.type === 'family_member') {
+    const members = Array.isArray(match.parent.family_members)
+      ? [...match.parent.family_members]
+      : []
+    members[match.index] = linked
+    updatePayload.family_members = members
+  }
+
+  const { error: updateError } = await supabase
+    .from('residents')
+    .update(updatePayload)
+    .eq('id', match.parent.id)
+
+  if (updateError) {
+    return { success: false, error: updateError.message }
+  }
+
+  return { success: true }
+}
+
+async function syncFamilyPeopleWithExistingResidents(payload) {
+  const people = []
+
+  if (payload.spouse?.full_name) {
+    people.push({ person: payload.spouse, type: 'spouse', index: null })
+  }
+
+  ;(payload.children || []).forEach((child, index) => {
+    people.push({ person: child, type: 'child', index })
+  })
+
+  ;(payload.family_members || []).forEach((member, index) => {
+    people.push({ person: member, type: 'family_member', index })
+  })
+
+  const linked = []
+
+  for (const item of people) {
+    const existing = await findDuplicateMember(item.person)
+
+    if (existing) {
+      linked.push({
+        ...item,
+        existing,
+      })
+    }
+  }
+
+  return linked
+}
+
 // Drives "Idadi ya Watoto": growing it appends blank rows, shrinking it trims from the end.
 const childrenCountModel = computed({
   get: () => form.children.length,
@@ -1144,7 +1393,7 @@ async function loadResidents() {
 function cleanChildren(children) {
   return (children || []).map((child) => {
     const baptized = !!child.is_baptized
-    return { full_name: (child.full_name || child.name || '').trim(), gender: child.gender || null, date_of_birth: child.date_of_birth || null, phone_number: (child.phone_number || '').trim() || null, email: (child.email || '').trim() || null, residence: (child.residence || '').trim() || null, is_baptized: baptized, baptism_year: baptized && child.baptism_year ? Number(child.baptism_year) : null, baptism_place: baptized ? ((child.baptism_place || '').trim() || null) : null, church_area: baptized ? ((child.church_area || '').trim() || null) : null, ministry_group: (child.ministry_group || '').trim() || null, church_role: (child.church_role || '').trim() || null, special_needs: (child.special_needs || '').trim() || null, is_tucasa_member: !!child.is_tucasa_member, institution_name: child.is_tucasa_member ? ((child.institution_name || '').trim() || null) : null, occupation: (child.occupation || '').trim() || null, skills: (child.skills || '').trim() || null }
+    return { full_name: toUpper((child.full_name || child.name || '').trim()), gender: child.gender || null, date_of_birth: child.date_of_birth || null, phone_number: (child.phone_number || '').trim() || null, email: (child.email || '').trim() || null, residence: toUpper((child.residence || '').trim()) || null, is_baptized: baptized, baptism_year: baptized && child.baptism_year ? Number(child.baptism_year) : null, baptism_place: baptized ? (toUpper((child.baptism_place || '').trim()) || null) : null, church_area: baptized ? (toUpper((child.church_area || '').trim()) || null) : null, ministry_group: toUpper((child.ministry_group || '').trim()) || null, church_role: (child.church_role || '').trim() || null, special_needs: toUpper((child.special_needs || '').trim()) || null, is_tucasa_member: !!child.is_tucasa_member, institution_name: child.is_tucasa_member ? (toUpper((child.institution_name || '').trim()) || null) : null, occupation: toUpper((child.occupation || '').trim()) || null, skills: toUpper((child.skills || '').trim()) || null }
   }).filter((child) => child.full_name)
 }
 
@@ -1158,7 +1407,7 @@ function cleanSpouse(spouse, married) {
   const spouseGender = getOppositeGender(form.gender)
 
   return {
-    full_name: (spouse.full_name || '').trim(),
+    full_name: toUpper((spouse.full_name || '').trim()),
     // Never trust manually supplied spouse gender; derive it from the primary member.
     gender: spouseGender || null,
     date_of_birth: spouse.date_of_birth || null,
@@ -1166,15 +1415,15 @@ function cleanSpouse(spouse, married) {
     email: (spouse.email || '').trim() || null,
     is_baptized: baptized,
     baptism_year: baptized && spouse.baptism_year ? Number(spouse.baptism_year) : null,
-    baptism_place: baptized ? (spouse.baptism_place || null) : null,
-    church_area: baptized ? ((spouse.church_area || '').trim() || null) : null,
-    ministry_group: spouse.ministry_group || null,
+    baptism_place: baptized ? toUpper(spouse.baptism_place || null) : null,
+    church_area: baptized ? (toUpper((spouse.church_area || '').trim()) || null) : null,
+    ministry_group: toUpper(spouse.ministry_group || null),
     church_role: spouse.church_role || null,
-    special_needs: (spouse.special_needs || '').trim() || null,
+    special_needs: toUpper((spouse.special_needs || '').trim()) || null,
     is_tucasa_member: !!spouse.is_tucasa_member,
-    institution_name: spouse.is_tucasa_member ? ((spouse.institution_name || '').trim() || null) : null,
-    occupation: (spouse.occupation || '').trim() || null,
-    skills: (spouse.skills || '').trim() || null,
+    institution_name: spouse.is_tucasa_member ? (toUpper((spouse.institution_name || '').trim()) || null) : null,
+    occupation: toUpper((spouse.occupation || '').trim()) || null,
+    skills: toUpper((spouse.skills || '').trim()) || null,
   }
 
 }
@@ -1182,7 +1431,7 @@ function cleanSpouse(spouse, married) {
 function cleanFamilyMembers(members) {
   return (members || []).map((member) => {
     const baptized = !!member.is_baptized
-    return { full_name: (member.full_name || '').trim(), relationship: (member.relationship || '').trim() || null, gender: member.gender || null, date_of_birth: member.date_of_birth || null, phone_number: (member.phone_number || '').trim() || null, email: (member.email || '').trim() || null, residence: (member.residence || '').trim() || null, is_baptized: baptized, baptism_year: baptized && member.baptism_year ? Number(member.baptism_year) : null, baptism_place: baptized ? ((member.baptism_place || '').trim() || null) : null, church_area: baptized ? ((member.church_area || '').trim() || null) : null, ministry_group: (member.ministry_group || '').trim() || null, church_role: (member.church_role || '').trim() || null, special_needs: (member.special_needs || '').trim() || null, is_tucasa_member: !!member.is_tucasa_member, institution_name: member.is_tucasa_member ? ((member.institution_name || '').trim() || null) : null, occupation: (member.occupation || '').trim() || null, skills: (member.skills || '').trim() || null }
+    return { full_name: toUpper((member.full_name || '').trim()), relationship: toUpper((member.relationship || '').trim()) || null, gender: member.gender || null, date_of_birth: member.date_of_birth || null, phone_number: (member.phone_number || '').trim() || null, email: (member.email || '').trim() || null, residence: toUpper((member.residence || '').trim()) || null, is_baptized: baptized, baptism_year: baptized && member.baptism_year ? Number(member.baptism_year) : null, baptism_place: baptized ? (toUpper((member.baptism_place || '').trim()) || null) : null, church_area: baptized ? (toUpper((member.church_area || '').trim()) || null) : null, ministry_group: toUpper((member.ministry_group || '').trim()) || null, church_role: (member.church_role || '').trim() || null, special_needs: toUpper((member.special_needs || '').trim()) || null, is_tucasa_member: !!member.is_tucasa_member, institution_name: member.is_tucasa_member ? (toUpper((member.institution_name || '').trim()) || null) : null, occupation: toUpper((member.occupation || '').trim()) || null, skills: toUpper((member.skills || '').trim()) || null }
   }).filter((member) => member.full_name)
 }
 
@@ -1206,49 +1455,64 @@ async function saveResident() {
     const payload = {
 
       // 1. Taarifa Binafsi
-      full_name: form.full_name,
+      full_name: toUpper(form.full_name),
       gender: form.gender,
       date_of_birth: form.date_of_birth || null,
       marital_status: form.marital_status || null,
       phone_number: form.phone_number || null,
       email: form.email || null,
-      residence: form.residence || null,
+      residence: toUpper(form.residence || null),
 
       // 2. Taarifa za Kiroho / Kanisa
       is_baptized: baptized,
       baptism_year: baptized && form.baptism_year ? Number(form.baptism_year) : null,
-      baptism_place: baptized ? (form.baptism_place || null) : null,
-      church_area: baptized ? ((form.church_area || '').trim() || null) : null,
-      ministry_group: form.ministry_group || null,
+      baptism_place: baptized ? toUpper(form.baptism_place || null) : null,
+      church_area: baptized ? (toUpper((form.church_area || '').trim()) || null) : null,
+      ministry_group: toUpper(form.ministry_group || null),
       church_role: form.church_role || null,
 
-      // 3. Taarifa za Familia — mwenzi na watoto huhifadhiwa tu akiwa ameoa/ameolewa;
-      // wanafamilia wengine huhifadhiwa bila kujali hali ya ndoa
+      // 3. Taarifa za Familia — ORIGINAL STRUCTURE IS PRESERVED
       spouse: cleanSpouse(form.spouse, married),
       children: married ? cleanChildren(form.children) : [],
       family_members: cleanFamilyMembers(form.family_members),
-      emergency_contact_name: form.emergency_contact_name || null,
+      emergency_contact_name: toUpper(form.emergency_contact_name || null),
       emergency_contact_phone: form.emergency_contact_phone || null,
 
       // 4. Taarifa za Ziada
       is_tucasa_member: student,
-      institution_name: student ? (form.institution_name || null) : null,
-      occupation: form.occupation || null,
-      skills: form.skills || null,
-      special_needs: form.special_needs || null,
+      institution_name: student ? toUpper(form.institution_name || null) : null,
+      occupation: toUpper(form.occupation || null),
+      skills: toUpper(form.skills || null),
+      special_needs: toUpper(form.special_needs || null),
 
     }
 
-    // Always verify against the database, not only the current browser list.
-    // This protects against duplicates created by another admin.
-    const duplicate = await findDuplicateMember(payload)
+    /*
+     * MAIN MEMBER DUPLICATE:
+     * The person filling the main form must not already exist as a real
+     * resident record. Family placeholders are handled separately below.
+     */
+    const mainDuplicate = await findDuplicateMember(payload)
 
-    if (duplicate) {
+    // Capture this BEFORE inserting the new personal row.
+    // It represents the case where this exact person was previously entered
+    // inside another resident's spouse/children/family_members section.
+    const mainNestedPlaceholder = findNestedFamilyPlaceholder(payload)
+
+    if (mainDuplicate) {
       error.value =
-        `Taarifa za ${duplicate.full_name} tayari zimesajiliwa. ` +
-        `Mfumo umezuia duplicate hii hata kama imesajiliwa na admin mwingine.`
+        `Taarifa za ${mainDuplicate.full_name} tayari zimesajiliwa. ` +
+        `Mfumo umezuia duplicate hii.`
       return
     }
+
+    /*
+     * FAMILY PEOPLE:
+     * If spouse/child/other family member already has a personal resident
+     * record, we do NOT reject the whole family registration. We use that
+     * existing resident data and attach its id + data to the family object.
+     */
+    const existingFamilyResidents = await syncFamilyPeopleWithExistingResidents(payload)
 
     let result
 
@@ -1271,6 +1535,8 @@ async function saveResident() {
       result = await supabase
         .from('residents')
         .insert({ ...payload, registered_by: userData.user.id })
+        .select('*')
+        .single()
 
     }
 
@@ -1279,9 +1545,74 @@ async function saveResident() {
       return
     }
 
-    message.value = editing.value
-      ? 'Church member updated successfully.'
-      : 'Church member registered successfully.'
+    /*
+     * CASE 1:
+     * Family head enters someone who already has their own resident row.
+     * We take the existing personal data and put it into the family object.
+     */
+    if (existingFamilyResidents.length && result.data?.id) {
+      let linkedCount = 0
+
+      for (const item of existingFamilyResidents) {
+        const familyMatch = {
+          parent: result.data,
+          type: item.type,
+          index: item.index,
+          person: item.person,
+        }
+
+        const linked = await updateNestedFamilyPlaceholder(
+          familyMatch,
+          item.existing,
+        )
+
+        if (linked.success) linkedCount++
+      }
+
+      if (linkedCount) {
+        message.value =
+          `Usajili umekamilika. ${linkedCount} ${linkedCount === 1 ? 'mwanafamilia ameunganishwa' : 'wanafamilia wameunganishwa'} ` +
+          `na taarifa zao za usajili binafsi zimetumika.`
+      }
+    }
+
+    /*
+     * CASE 2:
+     * A person was first entered inside another member's family section,
+     * then that person comes later to register personally.
+     * Find the old family placeholder and connect it to the new resident.
+     */
+    if (result.data?.id) {
+      const nestedPlaceholder = mainNestedPlaceholder
+
+      if (nestedPlaceholder && nestedPlaceholder.parent.id !== result.data.id) {
+        const linked = await updateNestedFamilyPlaceholder(
+          nestedPlaceholder,
+          result.data,
+        )
+
+        if (linked.success) {
+          const relationLabel = nestedPlaceholder.type === 'spouse'
+            ? 'mwenzi'
+            : nestedPlaceholder.type === 'child'
+              ? 'mtoto'
+              : 'mwanafamilia mwingine'
+
+          message.value =
+            `${payload.full_name} amesajiliwa na ameunganishwa moja kwa moja ` +
+            `kama ${relationLabel} wa familia iliyokuwepo.`
+        } else if (!message.value) {
+          message.value =
+            `Mshiriki amesajiliwa, lakini muunganiko wa familia haukuweza kukamilika: ${linked.error}`
+        }
+      }
+    }
+
+    if (!message.value) {
+      message.value = editing.value
+        ? 'Church member updated successfully.'
+        : 'Church member registered successfully.'
+    }
 
     resetForm()
 
@@ -1298,7 +1629,6 @@ async function saveResident() {
   }
 
 }
-
 
 /* =========================================================
    EDIT MEMBER
