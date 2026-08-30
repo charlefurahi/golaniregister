@@ -834,15 +834,8 @@ import {
 } from 'vue'
 
 import * as XLSX from 'xlsx'
-
 import { supabase } from '../lib/supabase'
-
 import logo from '../assets/logo.png'
-
-
-/* =========================================================
-   PROPS / EVENTS
-========================================================= */
 
 const props = defineProps({
   session: {
@@ -852,11 +845,6 @@ const props = defineProps({
 })
 
 defineEmits(['logged-out'])
-
-
-/* =========================================================
-   STATE
-========================================================= */
 
 const residents = ref([])
 const search = ref('')
@@ -868,26 +856,9 @@ const detailResident = ref(null)
 
 const currentYear = new Date().getFullYear()
 
-
-/* =========================================================
-   UPPERCASE HELPER
-   Applied to free-text fields only — never to email, phone
-   numbers, dates, or fields driven by a fixed <select> list.
-========================================================= */
-
 function toUpper(value) {
   return typeof value === 'string' && value ? value.toUpperCase() : value
 }
-
-/* =========================================================
-   LIVE UPPERCASE ON BLUR
-   Same field list as toUpper() above — the moment the admin
-   leaves a free-text field, force it to uppercase right in
-   the form, so what's on screen already matches what will be
-   saved. toUpper() at save time stays in place as a safety
-   net (covers values that arrive already in the model, e.g.
-   from autofill, without ever firing blur).
-========================================================= */
 
 function upperize(target, key) {
   if (typeof target[key] === 'string' && target[key]) {
@@ -895,14 +866,7 @@ function upperize(target, key) {
   }
 }
 
-
-/* =========================================================
-   FORM
-========================================================= */
-
 const emptyForm = () => ({
-
-  // 1. Taarifa Binafsi
   full_name: '',
   gender: '',
   date_of_birth: '',
@@ -911,7 +875,6 @@ const emptyForm = () => ({
   email: '',
   residence: '',
 
-  // 2. Taarifa za Kiroho / Kanisa
   is_baptized: false,
   baptism_year: '',
   baptism_place: '',
@@ -919,7 +882,6 @@ const emptyForm = () => ({
   ministry_group: '',
   church_role: '',
 
-  // 3. Taarifa za Familia (mwenzi na watoto ni muhimu tu kama ameoa/ameolewa)
   spouse: {
     full_name: '',
     gender: '',
@@ -938,32 +900,22 @@ const emptyForm = () => ({
     occupation: '',
     skills: '',
   },
-  children: [], // [{ name, age }]
-  family_members: [], // [{ full_name, relationship, gender, date_of_birth, phone_number, email, residence, is_baptized, baptism_year, baptism_place, church_area, ministry_group, church_role, special_needs }] — wanafamilia wasio watoto, siyo lazima kuoa/kuolewa
+
+  children: [],
+  family_members: [],
   emergency_contact_name: '',
   emergency_contact_phone: '',
 
-  // 4. Taarifa za Ziada
   is_tucasa_member: false,
   institution_name: '',
   occupation: '',
   skills: '',
   special_needs: '',
-
 })
 
 const form = reactive(emptyForm())
 
-
-/* =========================================================
-   MARRIAGE / FAMILY LOGIC
-========================================================= */
-
 const isMarried = computed(() => form.marital_status === 'Ameoa/Ameolewa')
-
-/* =========================================================
-   SPOUSE GENDER — AUTOMATIC OPPOSITE GENDER
-========================================================= */
 
 function getOppositeGender(gender) {
   if (gender === 'Mwanaume') return 'Mwanamke'
@@ -977,20 +929,15 @@ function syncSpouseGender() {
     : ''
 }
 
-// Whenever the main member gender changes, update spouse gender immediately.
 watch(
   [() => form.gender, () => form.marital_status],
-  () => {
-    syncSpouseGender()
-  },
+  syncSpouseGender,
   { immediate: true },
 )
 
 /* =========================================================
-   DUPLICATE DETECTION
-   A member must not be registered twice, regardless of which
-   admin is signed in.
-========================================================= */
+   IDENTITY / DUPLICATE HELPERS
+   ========================================================= */
 
 function normalizeValue(value) {
   return String(value || '')
@@ -1000,72 +947,55 @@ function normalizeValue(value) {
 }
 
 function normalizePhone(value) {
-  return String(value || '')
-    .replace(/\D/g, '')
+  return String(value || '').replace(/\D/g, '')
 }
 
 function isSamePerson(a, b) {
   const nameA = normalizeValue(a.full_name)
   const nameB = normalizeValue(b.full_name)
-
   const phoneA = normalizePhone(a.phone_number)
   const phoneB = normalizePhone(b.phone_number)
-
   const emailA = normalizeValue(a.email)
   const emailB = normalizeValue(b.email)
 
-  // Name is the main identity check. Phone/email provide extra protection.
   if (nameA && nameA === nameB) return true
   if (phoneA && phoneB && phoneA === phoneB) return true
   if (emailA && emailB && emailA === emailB) return true
 
-  // If a date of birth exists for both records, name + DOB is also a strong match.
   const dobA = String(a.date_of_birth || '').trim()
   const dobB = String(b.date_of_birth || '').trim()
 
-  if (nameA && dobA && nameB && dobB && nameA === nameB && dobA === dobB) {
-    return true
-  }
-
-  return false
+  return !!(
+    nameA && dobA &&
+    nameB && dobB &&
+    nameA === nameB && dobA === dobB
+  )
 }
 
-async function findDuplicateMember(payload) {
+async function findDuplicateMember(payload, excludeId = null) {
   const { data, error: duplicateQueryError } = await supabase
     .from('residents')
-    .select('id, full_name, gender, date_of_birth, phone_number, email')
+    .select('*')
 
   if (duplicateQueryError) {
     throw new Error(`Imeshindikana kuthibitisha duplicate: ${duplicateQueryError.message}`)
   }
 
-  const candidates = data || []
-
-  return candidates.find((resident) => {
-    // Do not compare the record with itself during editing.
-    if (editing.value && resident.id === editing.value.id) return false
+  return (data || []).find((resident) => {
+    if (excludeId && resident.id === excludeId) return false
     return isSamePerson(payload, resident)
   }) || null
 }
 
 /* =========================================================
-   FAMILY AUTO-LINKING
+   FAMILY HELPERS
 
-   We keep the original family structure:
-     resident.spouse
-     resident.children[]
-     resident.family_members[]
-
-   A person can therefore be entered in either order:
-
-   1. Family head enters spouse/child/member first, then that person
-      later registers personally.
-   2. Person registers personally first, then the family head enters
-      that person in the family section.
-
-   In both cases Vue connects the two records instead of creating a
-   second unrelated family person.
-========================================================= */
+   IMPORTANT:
+   Every spouse/child/family member is now also stored as a REAL
+   row in residents. The parent keeps the family structure in its
+   spouse/children/family_members JSON fields, while each person
+   also appears independently in Church Members.
+   ========================================================= */
 
 function familyPersonMatchScore(a, b) {
   if (!a || !b) return 0
@@ -1081,7 +1011,6 @@ function familyPersonMatchScore(a, b) {
   const dobA = String(a.date_of_birth || '').trim()
   const dobB = String(b.date_of_birth || '').trim()
 
-  // If both sides have the same identifying field, it strengthens the match.
   let score = 10
 
   if (phoneA && phoneB) {
@@ -1102,12 +1031,11 @@ function familyPersonMatchScore(a, b) {
   return score
 }
 
-function findNestedFamilyPlaceholder(person) {
+function findNestedFamilyPlaceholder(person, excludeId = null) {
   const matches = []
 
   for (const resident of residents.value) {
-    // A person's own row is not a family placeholder for themselves.
-    if (editing.value && resident.id === editing.value.id) continue
+    if (excludeId && resident.id === excludeId) continue
 
     if (resident.spouse && typeof resident.spouse === 'object') {
       const score = familyPersonMatchScore(person, resident.spouse)
@@ -1159,50 +1087,291 @@ function findNestedFamilyPlaceholder(person) {
   return matches[0]
 }
 
-function cleanFamilyLinkData(person, residentId, role) {
-  const baptized = !!person.is_baptized
+function cleanChild(child, residentId = null) {
+  const baptized = !!child.is_baptized
 
   return {
-    ...person,
-    resident_id: residentId,
-    family_linked: true,
-    family_role: role,
-    full_name: toUpper((person.full_name || '').trim()),
-    gender: person.gender || null,
-    date_of_birth: person.date_of_birth || null,
-    phone_number: (person.phone_number || '').trim() || null,
-    email: (person.email || '').trim() || null,
-    residence: toUpper((person.residence || '').trim()) || null,
+    full_name: toUpper((child.full_name || child.name || '').trim()),
+    gender: child.gender || null,
+    date_of_birth: child.date_of_birth || null,
+    phone_number: (child.phone_number || '').trim() || null,
+    email: (child.email || '').trim() || null,
+    residence: toUpper((child.residence || '').trim()) || null,
     is_baptized: baptized,
-    baptism_year: baptized && person.baptism_year ? Number(person.baptism_year) : null,
-    baptism_place: baptized ? (toUpper((person.baptism_place || '').trim()) || null) : null,
-    church_area: baptized ? (toUpper((person.church_area || '').trim()) || null) : null,
-    ministry_group: toUpper((person.ministry_group || '').trim()) || null,
-    church_role: person.church_role || null,
-    special_needs: toUpper((person.special_needs || '').trim()) || null,
-    is_tucasa_member: !!person.is_tucasa_member,
-    institution_name: person.is_tucasa_member ? (toUpper((person.institution_name || '').trim()) || null) : null,
-    occupation: toUpper((person.occupation || '').trim()) || null,
-    skills: toUpper((person.skills || '').trim()) || null,
+    baptism_year: baptized && child.baptism_year ? Number(child.baptism_year) : null,
+    baptism_place: baptized ? (toUpper((child.baptism_place || '').trim()) || null) : null,
+    church_area: baptized ? (toUpper((child.church_area || '').trim()) || null) : null,
+    ministry_group: toUpper((child.ministry_group || '').trim()) || null,
+    church_role: (child.church_role || '').trim() || null,
+    special_needs: toUpper((child.special_needs || '').trim()) || null,
+    is_tucasa_member: !!child.is_tucasa_member,
+    institution_name: child.is_tucasa_member
+      ? (toUpper((child.institution_name || '').trim()) || null)
+      : null,
+    occupation: toUpper((child.occupation || '').trim()) || null,
+    skills: toUpper((child.skills || '').trim()) || null,
+    ...(residentId ? { resident_id: residentId } : {}),
   }
 }
 
-async function updateNestedFamilyPlaceholder(match, personalResident) {
-  if (!match?.parent?.id || !personalResident?.id) {
-    return { success: false, error: 'Mshiriki wa familia hakupatikana.' }
+function cleanSpouse(spouse, married, residentId = null) {
+  if (!married || !spouse?.full_name) return null
+
+  const baptized = !!spouse.is_baptized
+  const spouseGender = getOppositeGender(form.gender)
+
+  return {
+    full_name: toUpper((spouse.full_name || '').trim()),
+    gender: spouseGender || null,
+    date_of_birth: spouse.date_of_birth || null,
+    phone_number: (spouse.phone_number || '').trim() || null,
+    email: (spouse.email || '').trim() || null,
+    is_baptized: baptized,
+    baptism_year: baptized && spouse.baptism_year ? Number(spouse.baptism_year) : null,
+    baptism_place: baptized ? (toUpper((spouse.baptism_place || '').trim()) || null) : null,
+    church_area: baptized ? (toUpper((spouse.church_area || '').trim()) || null) : null,
+    ministry_group: toUpper((spouse.ministry_group || '').trim()) || null,
+    church_role: spouse.church_role || null,
+    special_needs: toUpper((spouse.special_needs || '').trim()) || null,
+    is_tucasa_member: !!spouse.is_tucasa_member,
+    institution_name: spouse.is_tucasa_member
+      ? (toUpper((spouse.institution_name || '').trim()) || null)
+      : null,
+    occupation: toUpper((spouse.occupation || '').trim()) || null,
+    skills: toUpper((spouse.skills || '').trim()) || null,
+    ...(residentId ? { resident_id: residentId } : {}),
+  }
+}
+
+function cleanFamilyMembers(members) {
+  return (members || [])
+    .map((member) => {
+      const baptized = !!member.is_baptized
+
+      return {
+        full_name: toUpper((member.full_name || '').trim()),
+        relationship: toUpper((member.relationship || '').trim()) || null,
+        gender: member.gender || null,
+        date_of_birth: member.date_of_birth || null,
+        phone_number: (member.phone_number || '').trim() || null,
+        email: (member.email || '').trim() || null,
+        residence: toUpper((member.residence || '').trim()) || null,
+        is_baptized: baptized,
+        baptism_year: baptized && member.baptism_year ? Number(member.baptism_year) : null,
+        baptism_place: baptized ? (toUpper((member.baptism_place || '').trim()) || null) : null,
+        church_area: baptized ? (toUpper((member.church_area || '').trim()) || null) : null,
+        ministry_group: toUpper((member.ministry_group || '').trim()) || null,
+        church_role: (member.church_role || '').trim() || null,
+        special_needs: toUpper((member.special_needs || '').trim()) || null,
+        is_tucasa_member: !!member.is_tucasa_member,
+        institution_name: member.is_tucasa_member
+          ? (toUpper((member.institution_name || '').trim()) || null)
+          : null,
+        occupation: toUpper((member.occupation || '').trim()) || null,
+        skills: toUpper((member.skills || '').trim()) || null,
+      }
+    })
+    .filter((member) => member.full_name)
+}
+
+function familyRoleLabel(type) {
+  if (type === 'spouse') return 'SPOUSE'
+  if (type === 'child') return 'CHILD'
+  return 'MEMBER'
+}
+
+function familyPersonPayload(person, type, parentId, registeredBy) {
+  const role = familyRoleLabel(type)
+  const base = type === 'child'
+    ? cleanChild(person)
+    : type === 'spouse'
+      ? cleanSpouse(person, true)
+      : cleanFamilyMembers([person])[0]
+
+  if (!base?.full_name) return null
+
+  return {
+    ...base,
+    marital_status: type === 'spouse' ? 'Ameoa/Ameolewa' : null,
+    registered_by: registeredBy,
+  }
+}
+
+/*
+ * Save one family person as a REAL residents row.
+ * If the person already exists, reuse that row instead of creating
+ * a duplicate. This is what makes the person appear in the list.
+ */
+async function ensureFamilyResident(person, type, parentId, registeredBy) {
+  if (!person?.full_name) return null
+
+  const payload = familyPersonPayload(person, type, parentId, registeredBy)
+  if (!payload) return null
+
+  const existing = await findDuplicateMember(payload, parentId)
+
+  if (existing) {
+    return existing
   }
 
-  const role = match.type === 'spouse'
-    ? 'SPOUSE'
-    : match.type === 'child'
-      ? 'CHILD'
-      : 'MEMBER'
+  const { data, error: insertError } = await supabase
+    .from('residents')
+    .insert(payload)
+    .select('*')
+    .single()
 
-  const linked = cleanFamilyLinkData(personalResident, personalResident.id, role)
+  if (insertError) {
+    throw new Error(`Imeshindikana kuongeza ${payload.full_name} kwenye Church Members: ${insertError.message}`)
+  }
 
-  // Keep the relationship entered by the family head.
+  return data
+}
+
+/*
+ * Keep the family JSON on the parent connected to the actual resident id.
+ */
+async function updateParentFamilyLinks(parentId, spouse, children, familyMembers) {
+  const updatePayload = {
+    spouse: spouse || null,
+    children: children || [],
+    family_members: familyMembers || [],
+  }
+
+  const { error: updateError } = await supabase
+    .from('residents')
+    .update(updatePayload)
+    .eq('id', parentId)
+
+  if (updateError) {
+    throw new Error(`Mshikamano wa taarifa za familia umeshindikana: ${updateError.message}`)
+  }
+}
+
+/*
+ * Sync all people entered under the main member into the residents list.
+ */
+async function syncFamilyResidents(parentId, payload, registeredBy) {
+  let spouse = payload.spouse
+  const children = []
+  const familyMembers = []
+  let addedCount = 0
+
+  if (spouse?.full_name) {
+    const spouseResident = await ensureFamilyResident(
+      spouse,
+      'spouse',
+      parentId,
+      registeredBy,
+    )
+
+    if (spouseResident) {
+      spouse = cleanSpouse(spouse, true, spouseResident.id)
+      addedCount++
+    }
+  } else {
+    spouse = null
+  }
+
+  for (const child of payload.children || []) {
+    if (!child.full_name) continue
+
+    const childResident = await ensureFamilyResident(
+      child,
+      'child',
+      parentId,
+      registeredBy,
+    )
+
+    if (childResident) {
+      children.push(cleanChild(child, childResident.id))
+      addedCount++
+    }
+  }
+
+  for (const member of payload.family_members || []) {
+    if (!member.full_name) continue
+
+    const memberResident = await ensureFamilyResident(
+      member,
+      'family_member',
+      parentId,
+      registeredBy,
+    )
+
+    if (memberResident) {
+      const cleaned = cleanFamilyMembers([member])[0]
+      familyMembers.push({
+        ...cleaned,
+        resident_id: memberResident.id,
+      })
+      addedCount++
+    }
+  }
+
+  await updateParentFamilyLinks(parentId, spouse, children, familyMembers)
+
+  return {
+    spouse,
+    children,
+    familyMembers,
+    addedCount,
+  }
+}
+
+/* =========================================================
+   IF A FAMILY PERSON ALREADY EXISTS AS A NESTED RECORD
+   AND LATER REGISTERS PERSONALLY, UPDATE THAT SAME ROW.
+   ========================================================= */
+
+async function connectPersonalRegistrationToFamily(payload, existingResident) {
+  const nested = findNestedFamilyPlaceholder(payload, existingResident?.id)
+  if (!nested) return false
+
+  const updatePayload = {
+    ...payload,
+  }
+
+  const { data, error: updateError } = await supabase
+    .from('residents')
+    .update(updatePayload)
+    .eq('id', existingResident.id)
+    .select('*')
+    .single()
+
+  if (updateError) {
+    throw new Error(`Taarifa za mshiriki wa familia hazikuweza kusasishwa: ${updateError.message}`)
+  }
+
+  await updateNestedFamilyPlaceholder(nested, data)
+  return true
+}
+
+async function updateNestedFamilyPlaceholder(match, personalResident) {
+  if (!match?.parent?.id || !personalResident?.id) return false
+
+  const linked = {
+    full_name: toUpper((personalResident.full_name || '').trim()),
+    gender: personalResident.gender || null,
+    date_of_birth: personalResident.date_of_birth || null,
+    phone_number: personalResident.phone_number || null,
+    email: personalResident.email || null,
+    residence: toUpper((personalResident.residence || '').trim()) || null,
+    is_baptized: !!personalResident.is_baptized,
+    baptism_year: personalResident.baptism_year || null,
+    baptism_place: personalResident.baptism_place || null,
+    church_area: personalResident.church_area || null,
+    ministry_group: personalResident.ministry_group || null,
+    church_role: personalResident.church_role || null,
+    special_needs: personalResident.special_needs || null,
+    is_tucasa_member: !!personalResident.is_tucasa_member,
+    institution_name: personalResident.institution_name || null,
+    occupation: personalResident.occupation || null,
+    skills: personalResident.skills || null,
+    resident_id: personalResident.id,
+  }
+
   if (match.type === 'family_member') {
-    linked.relationship = match.person.relationship || linked.relationship || null
+    linked.relationship = match.person.relationship || null
   }
 
   const updatePayload = {}
@@ -1233,51 +1402,38 @@ async function updateNestedFamilyPlaceholder(match, personalResident) {
     .eq('id', match.parent.id)
 
   if (updateError) {
-    return { success: false, error: updateError.message }
+    throw new Error(updateError.message)
   }
 
-  return { success: true }
+  return true
 }
 
-async function syncFamilyPeopleWithExistingResidents(payload) {
-  const people = []
-
-  if (payload.spouse?.full_name) {
-    people.push({ person: payload.spouse, type: 'spouse', index: null })
-  }
-
-  ;(payload.children || []).forEach((child, index) => {
-    people.push({ person: child, type: 'child', index })
-  })
-
-  ;(payload.family_members || []).forEach((member, index) => {
-    people.push({ person: member, type: 'family_member', index })
-  })
-
-  const linked = []
-
-  for (const item of people) {
-    const existing = await findDuplicateMember(item.person)
-
-    if (existing) {
-      linked.push({
-        ...item,
-        existing,
-      })
-    }
-  }
-
-  return linked
-}
-
-// Drives "Idadi ya Watoto": growing it appends blank rows, shrinking it trims from the end.
 const childrenCountModel = computed({
   get: () => form.children.length,
   set: (value) => {
     const next = Math.max(0, Math.min(15, Number(value) || 0))
+
     if (next > form.children.length) {
       for (let i = form.children.length; i < next; i++) {
-        form.children.push({ full_name: '', gender: '', date_of_birth: '', phone_number: '', email: '', residence: '', is_baptized: false, baptism_year: '', baptism_place: '', church_area: '', ministry_group: '', church_role: '', special_needs: '', is_tucasa_member: false, institution_name: '', occupation: '', skills: '' })
+        form.children.push({
+          full_name: '',
+          gender: '',
+          date_of_birth: '',
+          phone_number: '',
+          email: '',
+          residence: '',
+          is_baptized: false,
+          baptism_year: '',
+          baptism_place: '',
+          church_area: '',
+          ministry_group: '',
+          church_role: '',
+          special_needs: '',
+          is_tucasa_member: false,
+          institution_name: '',
+          occupation: '',
+          skills: '',
+        })
       }
     } else {
       form.children.splice(next)
@@ -1289,34 +1445,43 @@ function removeChild(index) {
   form.children.splice(index, 1)
 }
 
-
-/* =========================================================
-   OTHER FAMILY MEMBERS (not children, not the spouse)
-========================================================= */
-
 function addFamilyMember() {
-  form.family_members.push({ full_name: '', relationship: '', gender: '', date_of_birth: '', phone_number: '', email: '', residence: '', is_baptized: false, baptism_year: '', baptism_place: '', church_area: '', ministry_group: '', church_role: '', special_needs: '', is_tucasa_member: false, institution_name: '', occupation: '', skills: '' })
+  form.family_members.push({
+    full_name: '',
+    relationship: '',
+    gender: '',
+    date_of_birth: '',
+    phone_number: '',
+    email: '',
+    residence: '',
+    is_baptized: false,
+    baptism_year: '',
+    baptism_place: '',
+    church_area: '',
+    ministry_group: '',
+    church_role: '',
+    special_needs: '',
+    is_tucasa_member: false,
+    institution_name: '',
+    occupation: '',
+    skills: '',
+  })
 }
 
 function removeFamilyMember(index) {
   form.family_members.splice(index, 1)
 }
 
-
 /* =========================================================
-   FILTER
-========================================================= */
+   FILTER / STATISTICS
+   ========================================================= */
 
 const filteredResidents = computed(() => {
-
   const q = search.value.trim().toLowerCase()
 
-  if (!q) {
-    return residents.value
-  }
+  if (!q) return residents.value
 
   return residents.value.filter((resident) => {
-
     const values = [
       resident.full_name,
       resident.gender,
@@ -1334,41 +1499,32 @@ const filteredResidents = computed(() => {
     return values
       .filter(Boolean)
       .some((value) => String(value).toLowerCase().includes(q))
-
   })
-
 })
 
-
-/* =========================================================
-   STATISTICS
-========================================================= */
-
 const menCount = computed(() =>
-  residents.value.filter(resident => resident.gender === 'Mwanaume').length
+  residents.value.filter(resident => resident.gender === 'Mwanaume').length,
 )
 
 const womenCount = computed(() =>
-  residents.value.filter(resident => resident.gender === 'Mwanamke').length
+  residents.value.filter(resident => resident.gender === 'Mwanamke').length,
 )
 
 const baptizedCount = computed(() =>
-  residents.value.filter(resident => resident.is_baptized).length
+  residents.value.filter(resident => resident.is_baptized).length,
 )
 
 const tucasaCount = computed(() =>
-  residents.value.filter(resident => resident.is_tucasa_member).length
+  residents.value.filter(resident => resident.is_tucasa_member).length,
 )
-
 
 /* =========================================================
    LOAD MEMBERS
-========================================================= */
+   ========================================================= */
 
 onMounted(loadResidents)
 
 async function loadResidents() {
-
   error.value = ''
 
   const { data, error: queryError } = await supabase
@@ -1382,80 +1538,24 @@ async function loadResidents() {
   }
 
   residents.value = data || []
-
 }
-
-
-/* =========================================================
-   HELPERS: CLEAN CONDITIONAL DATA BEFORE SAVE
-========================================================= */
-
-function cleanChildren(children) {
-  return (children || []).map((child) => {
-    const baptized = !!child.is_baptized
-    return { full_name: toUpper((child.full_name || child.name || '').trim()), gender: child.gender || null, date_of_birth: child.date_of_birth || null, phone_number: (child.phone_number || '').trim() || null, email: (child.email || '').trim() || null, residence: toUpper((child.residence || '').trim()) || null, is_baptized: baptized, baptism_year: baptized && child.baptism_year ? Number(child.baptism_year) : null, baptism_place: baptized ? (toUpper((child.baptism_place || '').trim()) || null) : null, church_area: baptized ? (toUpper((child.church_area || '').trim()) || null) : null, ministry_group: toUpper((child.ministry_group || '').trim()) || null, church_role: (child.church_role || '').trim() || null, special_needs: toUpper((child.special_needs || '').trim()) || null, is_tucasa_member: !!child.is_tucasa_member, institution_name: child.is_tucasa_member ? (toUpper((child.institution_name || '').trim()) || null) : null, occupation: toUpper((child.occupation || '').trim()) || null, skills: toUpper((child.skills || '').trim()) || null }
-  }).filter((child) => child.full_name)
-}
-
-function cleanSpouse(spouse, married) {
-
-  if (!married) {
-    return null
-  }
-
-  const baptized = !!spouse.is_baptized
-  const spouseGender = getOppositeGender(form.gender)
-
-  return {
-    full_name: toUpper((spouse.full_name || '').trim()),
-    // Never trust manually supplied spouse gender; derive it from the primary member.
-    gender: spouseGender || null,
-    date_of_birth: spouse.date_of_birth || null,
-    phone_number: (spouse.phone_number || '').trim() || null,
-    email: (spouse.email || '').trim() || null,
-    is_baptized: baptized,
-    baptism_year: baptized && spouse.baptism_year ? Number(spouse.baptism_year) : null,
-    baptism_place: baptized ? toUpper(spouse.baptism_place || null) : null,
-    church_area: baptized ? (toUpper((spouse.church_area || '').trim()) || null) : null,
-    ministry_group: toUpper(spouse.ministry_group || null),
-    church_role: spouse.church_role || null,
-    special_needs: toUpper((spouse.special_needs || '').trim()) || null,
-    is_tucasa_member: !!spouse.is_tucasa_member,
-    institution_name: spouse.is_tucasa_member ? (toUpper((spouse.institution_name || '').trim()) || null) : null,
-    occupation: toUpper((spouse.occupation || '').trim()) || null,
-    skills: toUpper((spouse.skills || '').trim()) || null,
-  }
-
-}
-
-function cleanFamilyMembers(members) {
-  return (members || []).map((member) => {
-    const baptized = !!member.is_baptized
-    return { full_name: toUpper((member.full_name || '').trim()), relationship: toUpper((member.relationship || '').trim()) || null, gender: member.gender || null, date_of_birth: member.date_of_birth || null, phone_number: (member.phone_number || '').trim() || null, email: (member.email || '').trim() || null, residence: toUpper((member.residence || '').trim()) || null, is_baptized: baptized, baptism_year: baptized && member.baptism_year ? Number(member.baptism_year) : null, baptism_place: baptized ? (toUpper((member.baptism_place || '').trim()) || null) : null, church_area: baptized ? (toUpper((member.church_area || '').trim()) || null) : null, ministry_group: toUpper((member.ministry_group || '').trim()) || null, church_role: (member.church_role || '').trim() || null, special_needs: toUpper((member.special_needs || '').trim()) || null, is_tucasa_member: !!member.is_tucasa_member, institution_name: member.is_tucasa_member ? (toUpper((member.institution_name || '').trim()) || null) : null, occupation: toUpper((member.occupation || '').trim()) || null, skills: toUpper((member.skills || '').trim()) || null }
-  }).filter((member) => member.full_name)
-}
-
 
 /* =========================================================
    SAVE MEMBER
-========================================================= */
+   ========================================================= */
 
 async function saveResident() {
-
   error.value = ''
   message.value = ''
   saving.value = true
 
   try {
-
     const married = isMarried.value
-    const baptized = form.is_baptized
-    const student = form.is_tucasa_member
+    const baptized = !!form.is_baptized
+    const student = !!form.is_tucasa_member
 
     const payload = {
-
-      // 1. Taarifa Binafsi
-      full_name: toUpper(form.full_name),
+      full_name: toUpper(form.full_name.trim()),
       gender: form.gender,
       date_of_birth: form.date_of_birth || null,
       marital_status: form.marital_status || null,
@@ -1463,7 +1563,6 @@ async function saveResident() {
       email: form.email || null,
       residence: toUpper(form.residence || null),
 
-      // 2. Taarifa za Kiroho / Kanisa
       is_baptized: baptized,
       baptism_year: baptized && form.baptism_year ? Number(form.baptism_year) : null,
       baptism_place: baptized ? toUpper(form.baptism_place || null) : null,
@@ -1471,171 +1570,136 @@ async function saveResident() {
       ministry_group: toUpper(form.ministry_group || null),
       church_role: form.church_role || null,
 
-      // 3. Taarifa za Familia — ORIGINAL STRUCTURE IS PRESERVED
       spouse: cleanSpouse(form.spouse, married),
-      children: married ? cleanChildren(form.children) : [],
+      children: married ? form.children.map(child => cleanChild(child)).filter(child => child.full_name) : [],
       family_members: cleanFamilyMembers(form.family_members),
       emergency_contact_name: toUpper(form.emergency_contact_name || null),
       emergency_contact_phone: form.emergency_contact_phone || null,
 
-      // 4. Taarifa za Ziada
       is_tucasa_member: student,
       institution_name: student ? toUpper(form.institution_name || null) : null,
       occupation: toUpper(form.occupation || null),
       skills: toUpper(form.skills || null),
       special_needs: toUpper(form.special_needs || null),
-
     }
 
-    /*
-     * MAIN MEMBER DUPLICATE:
-     * The person filling the main form must not already exist as a real
-     * resident record. Family placeholders are handled separately below.
-     */
-    const mainDuplicate = await findDuplicateMember(payload)
-
-    // Capture this BEFORE inserting the new personal row.
-    // It represents the case where this exact person was previously entered
-    // inside another resident's spouse/children/family_members section.
-    const mainNestedPlaceholder = findNestedFamilyPlaceholder(payload)
-
-    if (mainDuplicate) {
-      error.value =
-        `Taarifa za ${mainDuplicate.full_name} tayari zimesajiliwa. ` +
-        `Mfumo umezuia duplicate hii.`
+    if (!payload.full_name || !payload.gender) {
+      error.value = 'Jina kamili na jinsia ni lazima.'
       return
     }
 
-    /*
-     * FAMILY PEOPLE:
-     * If spouse/child/other family member already has a personal resident
-     * record, we do NOT reject the whole family registration. We use that
-     * existing resident data and attach its id + data to the family object.
-     */
-    const existingFamilyResidents = await syncFamilyPeopleWithExistingResidents(payload)
+    const excludeId = editing.value?.id || null
+    const duplicate = await findDuplicateMember(payload, excludeId)
 
-    let result
+    /*
+     * If the matching record is already a family person, promote/update
+     * that SAME row instead of creating a second row.
+     */
+    if (duplicate && !editing.value) {
+      const nestedMatch = findNestedFamilyPlaceholder(payload, duplicate.id)
+
+      if (nestedMatch) {
+        const linked = await connectPersonalRegistrationToFamily(payload, duplicate)
+
+        if (linked) {
+          message.value =
+            `${payload.full_name} tayari alikuwa ameongezwa kama mwanafamilia. ` +
+            `Taarifa zake zimeboreshwa kwenye Church Members bila kutengeneza duplicate.`
+
+          await loadResidents()
+          resetForm()
+          return
+        }
+      }
+
+      error.value =
+        `Taarifa za ${duplicate.full_name} tayari zimesajiliwa. Mfumo umezuia duplicate hii.`
+      return
+    }
+
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+
+    if (userError || !userData?.user) {
+      error.value = userError?.message || 'Unable to identify the signed-in admin.'
+      return
+    }
+
+    let savedResident
 
     if (editing.value) {
-
-      result = await supabase
+      const { data, error: updateError } = await supabase
         .from('residents')
         .update(payload)
         .eq('id', editing.value.id)
-
-    } else {
-
-      const { data: userData, error: userError } = await supabase.auth.getUser()
-
-      if (userError || !userData?.user) {
-        error.value = userError?.message || 'Unable to identify the signed-in admin.'
-        return
-      }
-
-      result = await supabase
-        .from('residents')
-        .insert({ ...payload, registered_by: userData.user.id })
         .select('*')
         .single()
 
-    }
+      if (updateError) {
+        error.value = updateError.message
+        return
+      }
 
-    if (result.error) {
-      error.value = result.error.message
-      return
+      savedResident = data
+    } else {
+      const { data, error: insertError } = await supabase
+        .from('residents')
+        .insert({
+          ...payload,
+          registered_by: userData.user.id,
+        })
+        .select('*')
+        .single()
+
+      if (insertError) {
+        error.value = insertError.message
+        return
+      }
+
+      savedResident = data
     }
 
     /*
-     * CASE 1:
-     * Family head enters someone who already has their own resident row.
-     * We take the existing personal data and put it into the family object.
+     * THIS IS THE MAIN CHANGE:
+     * Every spouse, child and other family member is now inserted into
+     * residents as a normal row. The parent record is then updated so
+     * its nested family data points to the real resident id.
      */
-    if (existingFamilyResidents.length && result.data?.id) {
-      let linkedCount = 0
+    const familyResult = await syncFamilyResidents(
+      savedResident.id,
+      payload,
+      userData.user.id,
+    )
 
-      for (const item of existingFamilyResidents) {
-        const familyMatch = {
-          parent: result.data,
-          type: item.type,
-          index: item.index,
-          person: item.person,
-        }
+    const totalFamilyPeople =
+      (familyResult.spouse ? 1 : 0) +
+      familyResult.children.length +
+      familyResult.familyMembers.length
 
-        const linked = await updateNestedFamilyPlaceholder(
-          familyMatch,
-          item.existing,
-        )
-
-        if (linked.success) linkedCount++
-      }
-
-      if (linkedCount) {
-        message.value =
-          `Usajili umekamilika. ${linkedCount} ${linkedCount === 1 ? 'mwanafamilia ameunganishwa' : 'wanafamilia wameunganishwa'} ` +
-          `na taarifa zao za usajili binafsi zimetumika.`
-      }
-    }
-
-    /*
-     * CASE 2:
-     * A person was first entered inside another member's family section,
-     * then that person comes later to register personally.
-     * Find the old family placeholder and connect it to the new resident.
-     */
-    if (result.data?.id) {
-      const nestedPlaceholder = mainNestedPlaceholder
-
-      if (nestedPlaceholder && nestedPlaceholder.parent.id !== result.data.id) {
-        const linked = await updateNestedFamilyPlaceholder(
-          nestedPlaceholder,
-          result.data,
-        )
-
-        if (linked.success) {
-          const relationLabel = nestedPlaceholder.type === 'spouse'
-            ? 'mwenzi'
-            : nestedPlaceholder.type === 'child'
-              ? 'mtoto'
-              : 'mwanafamilia mwingine'
-
-          message.value =
-            `${payload.full_name} amesajiliwa na ameunganishwa moja kwa moja ` +
-            `kama ${relationLabel} wa familia iliyokuwepo.`
-        } else if (!message.value) {
-          message.value =
-            `Mshiriki amesajiliwa, lakini muunganiko wa familia haukuweza kukamilika: ${linked.error}`
-        }
-      }
-    }
-
-    if (!message.value) {
-      message.value = editing.value
-        ? 'Church member updated successfully.'
+    if (editing.value) {
+      message.value = totalFamilyPeople
+        ? `Taarifa za ${payload.full_name} zimesasishwa. Wanafamilia ${totalFamilyPeople} pia wapo kwenye Church Members.`
+        : 'Church member updated successfully.'
+    } else {
+      message.value = totalFamilyPeople
+        ? `${payload.full_name} amesajiliwa. Wanafamilia ${totalFamilyPeople} pia wameongezwa kwenye Church Members.`
         : 'Church member registered successfully.'
     }
 
     resetForm()
-
     await loadResidents()
 
   } catch (err) {
-
     error.value = err?.message || 'Something went wrong.'
-
   } finally {
-
     saving.value = false
-
   }
-
 }
 
 /* =========================================================
    EDIT MEMBER
-========================================================= */
+   ========================================================= */
 
 function startEdit(resident) {
-
   editing.value = resident
 
   const children = Array.isArray(resident.children)
@@ -1705,7 +1769,6 @@ function startEdit(resident) {
     : []
 
   Object.assign(form, {
-
     full_name: resident.full_name || '',
     gender: resident.gender || '',
     date_of_birth: resident.date_of_birth || '',
@@ -1732,25 +1795,18 @@ function startEdit(resident) {
     occupation: resident.occupation || '',
     skills: resident.skills || '',
     special_needs: resident.special_needs || '',
-
   })
 
   window.scrollTo({ top: 0, behavior: 'smooth' })
-
 }
-
 
 /* =========================================================
    DELETE MEMBER
-========================================================= */
+   ========================================================= */
 
 async function deleteResident(resident) {
-
   const confirmed = confirm(`Delete ${resident.full_name}? This cannot be undone.`)
-
-  if (!confirmed) {
-    return
-  }
+  if (!confirmed) return
 
   error.value = ''
 
@@ -1765,31 +1821,16 @@ async function deleteResident(resident) {
   }
 
   message.value = 'Church member deleted successfully.'
-
   await loadResidents()
-
 }
-
-
-/* =========================================================
-   RESET FORM
-========================================================= */
 
 function resetForm() {
   editing.value = null
   Object.assign(form, emptyForm())
 }
 
-
-/* =========================================================
-   AGE
-========================================================= */
-
 function calculateAge(dateOfBirth) {
-
-  if (!dateOfBirth) {
-    return '—'
-  }
+  if (!dateOfBirth) return '—'
 
   const birthDate = new Date(dateOfBirth)
   const today = new Date()
@@ -1797,48 +1838,33 @@ function calculateAge(dateOfBirth) {
   let age = today.getFullYear() - birthDate.getFullYear()
   const monthDifference = today.getMonth() - birthDate.getMonth()
 
-  if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+  if (
+    monthDifference < 0 ||
+    (monthDifference === 0 && today.getDate() < birthDate.getDate())
+  ) {
     age--
   }
 
-  if (age < 0) {
-    return '—'
-  }
-
+  if (age < 0) return '—'
   return `${age} yrs`
-
 }
-
-
-/* =========================================================
-   DATE FORMAT
-========================================================= */
 
 function formatDate(value) {
-
-  if (!value) {
-    return '—'
-  }
-
+  if (!value) return '—'
   return new Intl.DateTimeFormat('sw-TZ', { dateStyle: 'medium' }).format(new Date(value))
-
 }
 
-
-/* =========================================================
-   EXCEL EXPORT
-========================================================= */
-
 function childrenToText(children) {
-  if (!Array.isArray(children) || !children.length) {
-    return ''
-  }
+  if (!Array.isArray(children) || !children.length) return ''
+
   return children
     .map((child) => {
       const name = child.full_name || child.name || ''
       const age = child.date_of_birth
         ? calculateAge(child.date_of_birth)
-        : (child.age !== null && child.age !== undefined && child.age !== '' ? `${child.age} yrs` : '')
+        : (child.age !== null && child.age !== undefined && child.age !== ''
+            ? `${child.age} yrs`
+            : '')
       return age ? `${name} (${age})` : name
     })
     .filter(Boolean)
@@ -1846,18 +1872,19 @@ function childrenToText(children) {
 }
 
 function familyMembersToText(members) {
-  if (!Array.isArray(members) || !members.length) {
-    return ''
-  }
+  if (!Array.isArray(members) || !members.length) return ''
+
   return members
-    .map((member) => (member.relationship ? `${member.full_name} (${member.relationship})` : member.full_name))
+    .map((member) =>
+      member.relationship
+        ? `${member.full_name} (${member.relationship})`
+        : member.full_name,
+    )
     .join('; ')
 }
 
 function exportExcel() {
-
   const rows = residents.value.map((resident) => ({
-
     'Jina kamili': resident.full_name,
     'Jinsia': resident.gender,
     'Tarehe ya kuzaliwa': resident.date_of_birth || '',
@@ -1898,19 +1925,24 @@ function exportExcel() {
     'Vipaji/Mahususi': resident.skills || '',
     'Mahitaji Maalum': resident.special_needs || '',
 
-    'Watoto - Taarifa za Ziada': (resident.children || []).map((child) =>
-      `${child.full_name || child.name || ''}: TUCASA=${child.is_tucasa_member ? 'Ndiyo' : 'Hapana'}${child.is_tucasa_member && child.institution_name ? `, Chuo=${child.institution_name}` : ''}, Elimu/Kazi=${child.occupation || ''}, Vipaji=${child.skills || ''}`
-    ).filter(Boolean).join('; '),
+    'Watoto - Taarifa za Ziada': (resident.children || [])
+      .map((child) =>
+        `${child.full_name || child.name || ''}: TUCASA=${child.is_tucasa_member ? 'Ndiyo' : 'Hapana'}${child.is_tucasa_member && child.institution_name ? `, Chuo=${child.institution_name}` : ''}, Elimu/Kazi=${child.occupation || ''}, Vipaji=${child.skills || ''}`,
+      )
+      .filter(Boolean)
+      .join('; '),
 
-    'Wanafamilia - Taarifa za Ziada': (resident.family_members || []).map((member) =>
-      `${member.full_name || ''}: TUCASA=${member.is_tucasa_member ? 'Ndiyo' : 'Hapana'}${member.is_tucasa_member && member.institution_name ? `, Chuo=${member.institution_name}` : ''}, Elimu/Kazi=${member.occupation || ''}, Vipaji=${member.skills || ''}`
-    ).filter(Boolean).join('; '),
+    'Wanafamilia - Taarifa za Ziada': (resident.family_members || [])
+      .map((member) =>
+        `${member.full_name || ''}: TUCASA=${member.is_tucasa_member ? 'Ndiyo' : 'Hapana'}${member.is_tucasa_member && member.institution_name ? `, Chuo=${member.institution_name}` : ''}, Elimu/Kazi=${member.occupation || ''}, Vipaji=${member.skills || ''}`,
+      )
+      .filter(Boolean)
+      .join('; '),
 
     'Registered by': resident.registered_by || '',
     'Tarehe ya usajili': resident.created_at
       ? new Date(resident.created_at).toLocaleString('sw-TZ')
       : '',
-
   }))
 
   const worksheet = XLSX.utils.json_to_sheet(rows)
@@ -1931,8 +1963,10 @@ function exportExcel() {
 
   worksheet['!cols'] = columnWidths.map(width => ({ wch: width }))
 
-  XLSX.writeFile(workbook, `golani-church-members-${new Date().toISOString().slice(0, 10)}.xlsx`)
-
+  XLSX.writeFile(
+    workbook,
+    `golani-church-members-${new Date().toISOString().slice(0, 10)}.xlsx`,
+  )
 }
 
 </script>
