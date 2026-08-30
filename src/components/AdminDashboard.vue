@@ -140,12 +140,12 @@
 
         <label>
           <span>Tarehe ya kuzaliwa</span>
-          <input v-model="form.date_of_birth" type="date" />
+          <input v-model="form.date_of_birth" type="date" / required>
         </label>
 
         <label>
           <span>Hali ya ndoa</span>
-          <select v-model="form.marital_status">
+          <select v-model="form.marital_status" required>
             <option value="">Chagua hali ya ndoa</option>
             <!-- These values match the database CHECK constraint -->
             <option value="Hajaoa/Hajaolewa">Hajaoa/Hajaolewa</option>
