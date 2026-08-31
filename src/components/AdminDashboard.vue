@@ -1063,7 +1063,7 @@ function validatePhone() {
   const digits = extractPhoneDigits(form.phone_number)
 
   if (!digits) {
-    phoneError.value = 'Namba ya simu inahitajika.'
+    phoneError.value = 'Tafadhali jaza namba ya simu'
     return false
   }
 
