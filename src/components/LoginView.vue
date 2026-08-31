@@ -15,12 +15,12 @@
 
       <!-- Header -->
       <div class="auth-header">
-        <p class="eyebrow">GOLANI SDA CHURCH</p>
+        <p class="eyebrow">Kanisa la Waadventista wa Sabato Golani</p>
 
         <h1>Usajili wa Washiriki na Waumini</h1>
 
         <p class="muted">
-          Ingia kwenye mfumo kusajili na kusimamia taarifa za wakazi wa kanisa.
+          Ingia kwenye mfumo kusajili na kusimamia taarifa za washiriki na waumini wa kanisa.
         </p>
       </div>
 
