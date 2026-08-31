@@ -157,18 +157,44 @@
         </label>
 
         <label>
-          <span>Namba ya simu</span>
-          <input v-model.trim="form.phone_number" type="tel" placeholder="07XXXXXXXX (pia ni namba ya WhatsApp)" />
+          <span>Namba ya simu <b>*</b></span>
+          <div class="phone-input-group">
+            <span class="phone-prefix">+255</span>
+            <input
+              :value="extractPhoneDigits(form.phone_number)"
+              @input="updatePhoneField(form, 'phone_number', $event.target.value)"
+              type="tel"
+              inputmode="numeric"
+              maxlength="9"
+              required
+              placeholder="7XXXXXXXX"
+              @blur="validatePhone"
+            />
+          </div>
+          <small v-if="phoneError" class="field-error">{{ phoneError }}</small>
         </label>
 
         <label>
-          <span>Barua pepe (Email)</span>
-          <input v-model.trim="form.email" type="email" placeholder="jina@mfano.com" />
+          <span>Barua pepe (Email) <b>*</b></span>
+          <input
+            v-model.trim="form.email"
+            type="email"
+            required
+            placeholder="jina@mfano.com"
+            @blur="validateEmail"
+          />
+          <small v-if="emailError" class="field-error">{{ emailError }}</small>
         </label>
 
         <label class="span-2">
-          <span>Anwani/Makazi</span>
-          <input v-model.trim="form.residence" placeholder="Mtaa, Kata, Jiji — Mfano: Miono, Msata, Dodoma" @blur="upperize(form, 'residence')" />
+          <span>Anwani/Makazi <b>*</b></span>
+          <input
+            v-model.trim="form.residence"
+            required
+            placeholder="Mtaa, Kata, Jiji — Mfano: Miono, Msata, Dodoma"
+            @blur="() => { upperize(form, 'residence'); validateResidence() }"
+          />
+          <small v-if="residenceError" class="field-error">{{ residenceError }}</small>
         </label>
 
 
@@ -275,13 +301,33 @@
           </label>
 
           <label>
-            <span>Namba ya simu (Mwenzi)</span>
-            <input v-model.trim="form.spouse.phone_number" type="tel" placeholder="07XXXXXXXX" />
+            <span>Namba ya simu (Mwenzi) <b>*</b></span>
+            <div class="phone-input-group">
+              <span class="phone-prefix">+255</span>
+              <input
+                :value="extractPhoneDigits(form.spouse.phone_number)"
+                @input="updatePhoneField(form.spouse, 'phone_number', $event.target.value)"
+                type="tel"
+                inputmode="numeric"
+                maxlength="9"
+                required
+                placeholder="7XXXXXXXX"
+                @blur="validateSpousePhone"
+              />
+            </div>
+            <small v-if="spousePhoneError" class="field-error">{{ spousePhoneError }}</small>
           </label>
 
           <label class="span-2">
-            <span>Barua pepe (Mwenzi)</span>
-            <input v-model.trim="form.spouse.email" type="email" placeholder="jina@mfano.com" />
+            <span>Barua pepe (Mwenzi) <b>*</b></span>
+            <input
+              v-model.trim="form.spouse.email"
+              type="email"
+              required
+              placeholder="jina@mfano.com"
+              @blur="validateSpouseEmail"
+            />
+            <small v-if="spouseEmailError" class="field-error">{{ spouseEmailError }}</small>
           </label>
 
           <!-- ---------- Mwenzi: Taarifa za Kiroho / Kanisa ---------- -->
@@ -389,8 +435,18 @@
                 <input v-model.trim="child.full_name" placeholder="Jina kamili *" @blur="upperize(child, 'full_name')" />
                 <select v-model="child.gender"><option value="">Jinsia</option><option value="Mwanaume">Mwanaume</option><option value="Mwanamke">Mwanamke</option></select>
                 <input v-model="child.date_of_birth" type="date" />
-                <input v-model.trim="child.phone_number" type="tel" placeholder="Namba ya simu" />
-                <input v-model.trim="child.email" type="email" placeholder="Barua pepe" />
+                <div class="phone-input-group phone-input-group-sm">
+                  <span class="phone-prefix">+255</span>
+                  <input
+                    :value="extractPhoneDigits(child.phone_number)"
+                    @input="updatePhoneField(child, 'phone_number', $event.target.value)"
+                    type="tel"
+                    inputmode="numeric"
+                    maxlength="9"
+                    placeholder="7XXXXXXXX (hiari)"
+                  />
+                </div>
+                <input v-model.trim="child.email" type="email" placeholder="Barua pepe (hiari)" />
                 <input v-model.trim="child.residence" placeholder="Anwani/Makazi" @blur="upperize(child, 'residence')" />
                 <div class="subsection-label span-2">Taarifa za Kiroho / Kanisa za Mtoto</div>
                 <label><span>Amebatizwa?</span><select v-model="child.is_baptized"><option :value="false">Hapana</option><option :value="true">Ndiyo</option></select></label>
@@ -444,8 +500,18 @@
               <input v-model.trim="member.relationship" list="relationship-options" placeholder="Uhusiano — Mfano: Baba, Kaka" @blur="upperize(member, 'relationship')" />
               <select v-model="member.gender"><option value="">Jinsia</option><option value="Mwanaume">Mwanaume</option><option value="Mwanamke">Mwanamke</option></select>
               <input v-model="member.date_of_birth" type="date" />
-              <input v-model.trim="member.phone_number" type="tel" placeholder="Namba ya simu" />
-              <input v-model.trim="member.email" type="email" placeholder="Barua pepe" />
+              <div class="phone-input-group phone-input-group-sm">
+                <span class="phone-prefix">+255</span>
+                <input
+                  :value="extractPhoneDigits(member.phone_number)"
+                  @input="updatePhoneField(member, 'phone_number', $event.target.value)"
+                  type="tel"
+                  inputmode="numeric"
+                  maxlength="9"
+                  placeholder="7XXXXXXXX (hiari)"
+                />
+              </div>
+              <input v-model.trim="member.email" type="email" placeholder="Barua pepe (hiari)" />
               <input v-model.trim="member.residence" placeholder="Anwani/Makazi" @blur="upperize(member, 'residence')" />
               <div class="subsection-label span-2">Taarifa za Kiroho / Kanisa za Mwanafamilia</div>
               <label><span>Amebatizwa?</span><select v-model="member.is_baptized"><option :value="false">Hapana</option><option :value="true">Ndiyo</option></select></label>
@@ -505,8 +571,21 @@
         </label>
 
         <label>
-          <span>Namba ya dharura</span>
-          <input v-model.trim="form.emergency_contact_phone" type="tel" placeholder="07XXXXXXXX" />
+          <span>Namba ya dharura <b>*</b></span>
+          <div class="phone-input-group">
+            <span class="phone-prefix">+255</span>
+            <input
+              :value="extractPhoneDigits(form.emergency_contact_phone)"
+              @input="updatePhoneField(form, 'emergency_contact_phone', $event.target.value)"
+              type="tel"
+              inputmode="numeric"
+              maxlength="9"
+              required
+              placeholder="7XXXXXXXX"
+              @blur="validateEmergencyPhone"
+            />
+          </div>
+          <small v-if="emergencyPhoneError" class="field-error">{{ emergencyPhoneError }}</small>
         </label>
 
 
@@ -934,6 +1013,158 @@ watch(
   syncSpouseGender,
   { immediate: true },
 )
+
+/* =========================================================
+   PHONE / EMAIL / RESIDENCE VALIDATION
+   ========================================================= */
+
+const PHONE_PREFIX = '+255'
+const PHONE_REGEX = /^[67]\d{8}$/ // Tanzania: tarakimu 9, huanza na 6 au 7
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const phoneError = ref('')
+const emailError = ref('')
+const residenceError = ref('')
+const spousePhoneError = ref('')
+const spouseEmailError = ref('')
+const emergencyPhoneError = ref('')
+
+function extractPhoneDigits(raw) {
+  const value = raw || ''
+
+  let digits = value.startsWith(PHONE_PREFIX)
+    ? value.slice(PHONE_PREFIX.length)
+    : value.replace(/\D/g, '')
+
+  if (digits.startsWith('255')) digits = digits.slice(3)
+  if (digits.startsWith('0')) digits = digits.slice(1)
+
+  return digits.replace(/\D/g, '').slice(0, 9)
+}
+
+function formatPhoneFromDigits(digits) {
+  const clean = String(digits || '').replace(/\D/g, '').slice(0, 9)
+  return clean ? `${PHONE_PREFIX}${clean}` : ''
+}
+
+function updatePhoneField(target, key, rawValue) {
+  target[key] = formatPhoneFromDigits(extractPhoneDigits(rawValue))
+}
+
+function isValidPhoneDigits(digits) {
+  return PHONE_REGEX.test(digits || '')
+}
+
+function isValidEmail(value) {
+  return EMAIL_REGEX.test((value || '').trim())
+}
+
+function validatePhone() {
+  const digits = extractPhoneDigits(form.phone_number)
+
+  if (!digits) {
+    phoneError.value = 'Namba ya simu inahitajika.'
+    return false
+  }
+
+  if (!isValidPhoneDigits(digits)) {
+    phoneError.value = 'Ingiza namba sahihi ya simu (tarakimu 9, mfano: 712345678).'
+    return false
+  }
+
+  phoneError.value = ''
+  return true
+}
+
+function validateSpousePhone() {
+  if (!isMarried.value) {
+    spousePhoneError.value = ''
+    return true
+  }
+
+  const digits = extractPhoneDigits(form.spouse.phone_number)
+
+  if (!digits) {
+    spousePhoneError.value = 'Namba ya simu ya mwenzi inahitajika.'
+    return false
+  }
+
+  if (!isValidPhoneDigits(digits)) {
+    spousePhoneError.value = 'Ingiza namba sahihi ya simu ya mwenzi (tarakimu 9, mfano: 712345678).'
+    return false
+  }
+
+  spousePhoneError.value = ''
+  return true
+}
+
+function validateEmergencyPhone() {
+  const digits = extractPhoneDigits(form.emergency_contact_phone)
+
+  if (!digits) {
+    emergencyPhoneError.value = 'Namba ya dharura ni lazima.'
+    return false
+  }
+
+  if (!isValidPhoneDigits(digits)) {
+    emergencyPhoneError.value = 'Ingiza namba sahihi ya dharura (tarakimu 9, mfano: 712345678).'
+    return false
+  }
+
+  emergencyPhoneError.value = ''
+  return true
+}
+
+function validateEmail() {
+  const value = (form.email || '').trim()
+
+  if (!value) {
+    emailError.value = 'Barua pepe inahitajika.'
+    return false
+  }
+
+  if (!isValidEmail(value)) {
+    emailError.value = 'Ingiza barua pepe sahihi (mfano: jina@mfano.com).'
+    return false
+  }
+
+  emailError.value = ''
+  return true
+}
+
+function validateSpouseEmail() {
+  if (!isMarried.value) {
+    spouseEmailError.value = ''
+    return true
+  }
+
+  const value = (form.spouse.email || '').trim()
+
+  if (!value) {
+    spouseEmailError.value = 'Barua pepe ya mwenzi inahitajika.'
+    return false
+  }
+
+  if (!isValidEmail(value)) {
+    spouseEmailError.value = 'Ingiza barua pepe sahihi ya mwenzi (mfano: jina@mfano.com).'
+    return false
+  }
+
+  spouseEmailError.value = ''
+  return true
+}
+
+function validateResidence() {
+  const value = (form.residence || '').trim()
+
+  if (!value) {
+    residenceError.value = 'Mahali anapoishi ni lazima.'
+    return false
+  }
+
+  residenceError.value = ''
+  return true
+}
 
 /* =========================================================
    IDENTITY / DUPLICATE HELPERS
@@ -1588,6 +1819,18 @@ async function saveResident() {
       return
     }
 
+    const phoneOk = validatePhone()
+    const emailOk = validateEmail()
+    const residenceOk = validateResidence()
+    const emergencyPhoneOk = validateEmergencyPhone()
+    const spousePhoneOk = validateSpousePhone()
+    const spouseEmailOk = validateSpouseEmail()
+
+    if (!phoneOk || !emailOk || !residenceOk || !emergencyPhoneOk || !spousePhoneOk || !spouseEmailOk) {
+      error.value = 'Tafadhali sahihisha taarifa zilizoangaziwa kwa nyekundu kabla ya kuendelea.'
+      return
+    }
+
     const excludeId = editing.value?.id || null
     const duplicate = await findDuplicateMember(payload, excludeId)
 
@@ -1701,6 +1944,12 @@ async function saveResident() {
 
 function startEdit(resident) {
   editing.value = resident
+  phoneError.value = ''
+  emailError.value = ''
+  residenceError.value = ''
+  spousePhoneError.value = ''
+  spouseEmailError.value = ''
+  emergencyPhoneError.value = ''
 
   const children = Array.isArray(resident.children)
     ? resident.children.map((child) => ({
@@ -1827,6 +2076,12 @@ async function deleteResident(resident) {
 function resetForm() {
   editing.value = null
   Object.assign(form, emptyForm())
+  phoneError.value = ''
+  emailError.value = ''
+  residenceError.value = ''
+  spousePhoneError.value = ''
+  spouseEmailError.value = ''
+  emergencyPhoneError.value = ''
 }
 
 function calculateAge(dateOfBirth) {
@@ -2516,6 +2771,61 @@ function exportExcel() {
   font-size: 10.5px;
   font-weight: 500;
   line-height: 1.45;
+}
+
+/* =========================================================
+   PHONE PREFIX INPUT / FIELD ERROR
+========================================================= */
+
+.phone-input-group {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--white);
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.phone-input-group:focus-within {
+  border-color: var(--church-blue);
+  box-shadow: 0 0 0 3px rgba(26, 63, 111, .1);
+}
+
+.phone-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--blue-tint);
+  color: var(--church-blue-dark);
+  font-weight: 800;
+  font-size: 14px;
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.phone-input-group input {
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  min-height: 44px;
+}
+
+.phone-input-group-sm .phone-prefix {
+  padding: 0 9px;
+  font-size: 12px;
+}
+
+.phone-input-group-sm input {
+  min-height: 42px;
+}
+
+.field-error {
+  display: block;
+  margin-top: -3px;
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: 700;
 }
 
 /* =========================================================
