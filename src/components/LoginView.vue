@@ -1,81 +1,67 @@
 <template>
   <main class="auth-page">
     <section class="auth-card">
-
-      <!-- Church Logo -->
       <div class="church-brand">
         <div class="church-logo-wrap">
-          <img
-            :src="logo"
-            alt="Nembo ya Kanisa la Golani SDA"
-            class="church-logo"
-          />
+          <img :src="logo" alt="Nembo ya Kanisa la Golani SDA" class="church-logo" />
         </div>
       </div>
 
-      <!-- Header -->
       <div class="auth-header">
+<<<<<<< HEAD
         <p class="eyebrow">Kanisa la Waadventista wa Sabato Golani</p>
 
+=======
+        <p class="eyebrow">KANISA LA WAADVENTISTA WA SABATO GOLANI</p>
+>>>>>>> 8c73d91 (adding functionalities for member login with no authentication)
         <h1>Usajili wa Washiriki na Waumini</h1>
-
         <p class="muted">
+<<<<<<< HEAD
           Ingia kwenye mfumo kusajili na kusimamia taarifa za washiriki na waumini wa kanisa.
         </p>
+=======
+          Ingia kama msimamizi wa mfumo</p>
+>>>>>>> 8c73d91 (adding functionalities for member login with no authentication)
       </div>
 
-      <!-- Login Form -->
-      <form
-        class="form-stack"
-        @submit.prevent="login"
-      >
+      <div class="admin-login-label">
+        <span></span>
+        <strong>ADMIN LOGIN</strong>
+        <span></span>
+      </div>
+
+      <form class="form-stack" @submit.prevent="login">
         <label>
           <span>Barua pepe</span>
-
-          <input
-            v-model.trim="email"
-            type="email"
-            autocomplete="username"
-            required
-            placeholder="admin@example.com"
-          />
+          <input v-model.trim="email" type="email" autocomplete="username" required placeholder="johndoe@mfano.com" />
         </label>
 
         <label>
           <span>Nenosiri</span>
-
-          <input
-            v-model="password"
-            type="password"
-            autocomplete="current-password"
-            required
-            placeholder="••••••••"
-          />
+          <input v-model="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
         </label>
 
-        <p
-          v-if="error"
-          class="error"
-          role="alert"
-        >
-          {{ error }}
-        </p>
+        <p v-if="error" class="error" role="alert">{{ error }}</p>
 
-        <button
-          class="primary-button"
-          type="submit"
-          :disabled="loading"
-        >
-          {{ loading ? 'Inaingia…' : 'Ingia kwenye mfumo' }}
+        <button class="primary-button" type="submit" :disabled="loading">
+          {{ loading ? 'Inaingia…' : 'Ingia' }}
         </button>
       </form>
 
-      <!-- Security Notice -->
+      <div class="member-divider"><span>AU</span></div>
+
+      <button class="member-button" type="button" @click="$emit('continue-as-member')">
+        <span class="member-button-icon">→</span>
+        <span>
+          <strong>Endelea kama Mtumiaji wa kawaida</strong>
+          <small>Ingia kwenye mfumo na ujaze taarifa zako</small>
+        </span>
+      </button>
+
       <div class="security-note">
         <span class="security-dot"></span>
-        Mfumo huu unapatikana kwa wasimamizi walioidhinishwa pekee
+        
       </div>
-
     </section>
   </main>
 </template>
@@ -85,365 +71,75 @@ import { ref } from 'vue'
 import { supabase } from '../lib/supabase'
 import logo from '../assets/logo.png'
 
-const emit = defineEmits(['logged-in'])
-
+const emit = defineEmits(['admin-logged-in', 'continue-as-member'])
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
 
+function normalizeEmail(value) {
+  return String(value || '').trim().toLowerCase()
+}
+
 async function login() {
   error.value = ''
   loading.value = true
 
-  const { data, error: authError } =
-    await supabase.auth.signInWithPassword({
-      email: email.value,
+  try {
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
+      email: normalizeEmail(email.value),
       password: password.value,
     })
 
-  loading.value = false
+    if (authError || !data?.session) {
+      error.value = 'Barua pepe au nenosiri la admin si sahihi.'
+      return
+    }
 
-  if (authError) {
-    error.value = 'Barua pepe au nenosiri si sahihi.'
-    return
+    const { data: adminRecord, error: roleError } = await supabase
+      .from('admin_users')
+      .select('user_id')
+      .eq('user_id', data.session.user.id)
+      .maybeSingle()
+
+    if (roleError || !adminRecord) {
+      await supabase.auth.signOut()
+      error.value = 'Akaunti hii haina ruhusa ya kuingia kama admin. Tumia “Continue as Normal Member”.'
+      return
+    }
+
+    emit('admin-logged-in', data.session)
+  } catch (err) {
+    console.error('Unexpected admin login error:', err)
+    error.value = 'Imeshindikana kuingia kwa sasa. Jaribu tena.'
+  } finally {
+    loading.value = false
   }
-
-  emit('logged-in', data.session)
 }
 </script>
 
 <style scoped>
-/* ================================
-   AUTH PAGE
-================================ */
-
 .auth-page {
-  min-height: 100vh;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 32px 20px;
-
-  background:
-    radial-gradient(
-      circle at top,
-      rgba(13, 33, 55, 0.08),
-      transparent 45%
-    ),
-    #f5f7fa;
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 32px 20px; background: radial-gradient(circle at top, rgba(13,33,55,.08), transparent 45%), #f5f7fa;
 }
-
-
-/* ================================
-   LOGIN CARD
-================================ */
-
-.auth-card {
-  width: 100%;
-  max-width: 440px;
-
-  padding: 42px 40px 34px;
-
-  background: #ffffff;
-
-  border: 1px solid rgba(13, 33, 55, 0.08);
-  border-radius: 20px;
-
-  box-shadow:
-    0 24px 60px rgba(13, 33, 55, 0.12),
-    0 4px 12px rgba(13, 33, 55, 0.05);
-}
-
-
-/* ================================
-   CHURCH BRAND
-================================ */
-
-.church-brand {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  margin-bottom: 22px;
-}
-
-.church-logo-wrap {
-  width: 94px;
-  height: 94px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: #0d2137;
-
-  border: 2px solid #16324a;
-  border-radius: 50%;
-
-  box-shadow:
-    0 12px 28px rgba(13, 33, 55, 0.22),
-    0 0 0 7px rgba(13, 33, 55, 0.05);
-
-  overflow: hidden;
-}
-
-.church-logo {
-  width: 74px;
-  height: 74px;
-
-  display: block;
-
-  object-fit: contain;
-}
-
-
-/* ================================
-   HEADER
-================================ */
-
-.auth-header {
-  text-align: center;
-
-  margin-bottom: 30px;
-}
-
-.eyebrow {
-  margin: 0 0 9px;
-
-  color: #0d2137;
-
-  font-size: 12px;
-  font-weight: 800;
-
-  letter-spacing: 0.16em;
-
-  text-transform: uppercase;
-}
-
-.auth-header h1 {
-  margin: 0;
-
-  color: #0d2137;
-
-  font-size: 28px;
-  line-height: 1.2;
-
-  font-weight: 800;
-
-  letter-spacing: -0.025em;
-}
-
-.muted {
-  max-width: 340px;
-
-  margin: 12px auto 0;
-
-  color: #667085;
-
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-
-/* ================================
-   FORM
-================================ */
-
-.form-stack {
-  display: flex;
-  flex-direction: column;
-
-  gap: 20px;
-}
-
-.form-stack label {
-  display: flex;
-  flex-direction: column;
-
-  gap: 8px;
-
-  color: #0d2137;
-
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.form-stack input {
-  width: 100%;
-  height: 48px;
-
-  box-sizing: border-box;
-
-  padding: 0 14px;
-
-  color: #0d2137;
-  background: #ffffff;
-
-  border: 1px solid #d5dce5;
-  border-radius: 10px;
-
-  outline: none;
-
-  font-size: 14px;
-
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
-}
-
-.form-stack input::placeholder {
-  color: #98a2b3;
-}
-
-.form-stack input:hover {
-  border-color: #9aa9b8;
-}
-
-.form-stack input:focus {
-  border-color: #0d2137;
-
-  box-shadow:
-    0 0 0 3px rgba(13, 33, 55, 0.09);
-}
-
-
-/* ================================
-   ERROR
-================================ */
-
-.error {
-  margin: -4px 0 0;
-
-  padding: 10px 12px;
-
-  color: #b42318;
-  background: #fef3f2;
-
-  border: 1px solid #fecdca;
-  border-radius: 8px;
-
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-
-/* ================================
-   PRIMARY BUTTON
-================================ */
-
-.primary-button {
-  width: 100%;
-  min-height: 50px;
-
-  margin-top: 2px;
-
-  color: #ffffff;
-  background: #0d2137;
-
-  border: 1px solid #0d2137;
-  border-radius: 10px;
-
-  cursor: pointer;
-
-  font-size: 14px;
-  font-weight: 800;
-
-  letter-spacing: 0.01em;
-
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.primary-button:hover:not(:disabled) {
-  background: #16324a;
-
-  transform: translateY(-1px);
-
-  box-shadow:
-    0 10px 24px rgba(13, 33, 55, 0.22);
-}
-
-.primary-button:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.primary-button:disabled {
-  opacity: 0.65;
-
-  cursor: not-allowed;
-}
-
-
-/* ================================
-   SECURITY NOTE
-================================ */
-
-.security-note {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 7px;
-
-  margin-top: 24px;
-
-  color: #667085;
-
-  font-size: 12px;
-  font-weight: 600;
-
-  text-align: center;
-}
-
-.security-dot {
-  width: 7px;
-  height: 7px;
-
-  flex: 0 0 auto;
-
-  background: #0d2137;
-
-  border-radius: 50%;
-}
-
-
-/* ================================
-   MOBILE
-================================ */
-
-@media (max-width: 640px) {
-  .auth-page {
-    padding: 20px 14px;
-  }
-
-  .auth-card {
-    padding: 34px 22px 28px;
-
-    border-radius: 16px;
-  }
-
-  .church-logo-wrap {
-    width: 84px;
-    height: 84px;
-  }
-
-  .church-logo {
-    width: 66px;
-    height: 66px;
-  }
-
-  .auth-header h1 {
-    font-size: 24px;
-  }
-
-  .security-note {
-    line-height: 1.5;
-  }
-}
+.auth-card { width: 100%; max-width: 460px; padding: 42px 40px 34px; background: #fff; border: 1px solid rgba(13,33,55,.08); border-radius: 20px; box-shadow: 0 24px 60px rgba(13,33,55,.12), 0 4px 12px rgba(13,33,55,.05); }
+.church-brand { display:flex; justify-content:center; margin-bottom:22px; }
+.church-logo-wrap { width:94px; height:94px; display:flex; align-items:center; justify-content:center; background:#0d2137; border:2px solid #16324a; border-radius:50%; overflow:hidden; }
+.church-logo { width:74px; height:74px; object-fit:contain; }
+.auth-header { text-align:center; margin-bottom:24px; }
+.eyebrow { margin:0 0 7px; color:#d4af1f; font-size:11px; font-weight:800; letter-spacing:.16em; }
+h1 { margin:0; color:#0d2137; font-size:25px; } .muted { color:#667085; line-height:1.6; font-size:14px; }
+.admin-login-label { display:flex; align-items:center; gap:10px; margin:20px 0; color:#0d2137; font-size:11px; letter-spacing:.12em; }
+.admin-login-label span { height:1px; flex:1; background:#e5e7eb; }
+.form-stack { display:grid; gap:16px; } label { display:grid; gap:7px; color:#0d2137; font-size:13px; font-weight:700; }
+input { width:100%; min-height:46px; padding:10px 12px; border:1px solid #dfe4ea; border-radius:10px; outline:none; } input:focus { border-color:#d4af1f; box-shadow:0 0 0 3px rgba(244,208,63,.15); }
+.primary-button { width:100%; min-height:47px; border:0; border-radius:10px; background:#0d2137; color:#fff; font-weight:800; cursor:pointer; } .primary-button:disabled { opacity:.65; cursor:not-allowed; }
+.member-divider { display:flex; align-items:center; gap:12px; margin:24px 0 16px; color:#98a2b3; font-size:11px; font-weight:800; } .member-divider:before,.member-divider:after { content:''; height:1px; flex:1; background:#e5e7eb; }
+.member-button { width:100%; display:flex; align-items:center; gap:12px; text-align:left; padding:14px; border:1px solid #d4af1f; border-radius:12px; background:#fffdf4; color:#0d2137; cursor:pointer; transition:.2s ease; } .member-button:hover { transform:translateY(-1px); box-shadow:0 10px 22px rgba(212,175,31,.12); }
+.member-button-icon { width:38px; height:38px; flex:0 0 38px; display:grid; place-items:center; border-radius:50%; background:#f4d03f; font-size:20px; font-weight:900; }
+.member-button strong,.member-button small { display:block; } .member-button small { margin-top:3px; color:#667085; line-height:1.35; }
+.error { margin:0; padding:11px 13px; border-radius:9px; font-size:13px; color:#8a2430; background:#fff1f2; }
+.security-note { display:flex; align-items:center; gap:8px; margin-top:20px; color:#667085; font-size:12px; line-height:1.5; } .security-dot { width:8px; height:8px; border-radius:50%; background:#22a06b; }
+@media (max-width:640px) { .auth-card { padding:30px 22px; } h1 { font-size:22px; } }
 </style>

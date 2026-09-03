@@ -319,15 +319,8 @@
           </label>
 
           <label class="span-2">
-            <span>Barua pepe (Mwenzi) <b>*</b></span>
-            <input
-              v-model.trim="form.spouse.email"
-              type="email"
-              required
-              placeholder="jina@mfano.com"
-              @blur="validateSpouseEmail"
-            />
-            <small v-if="spouseEmailError" class="field-error">{{ spouseEmailError }}</small>
+            <span>Barua pepe (Mwenzi)</span>
+            <input v-model.trim="form.spouse.email" type="email" placeholder="jina@mfano.com" />
           </label>
 
           <!-- ---------- Mwenzi: Taarifa za Kiroho / Kanisa ---------- -->
@@ -1015,160 +1008,10 @@ watch(
 )
 
 /* =========================================================
-   PHONE / EMAIL / RESIDENCE VALIDATION
-   ========================================================= */
-
-const PHONE_PREFIX = '+255'
-const PHONE_REGEX = /^[67]\d{8}$/ // Tanzania: tarakimu 9, huanza na 6 au 7
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-const phoneError = ref('')
-const emailError = ref('')
-const residenceError = ref('')
-const spousePhoneError = ref('')
-const spouseEmailError = ref('')
-const emergencyPhoneError = ref('')
-
-function extractPhoneDigits(raw) {
-  const value = raw || ''
-
-  let digits = value.startsWith(PHONE_PREFIX)
-    ? value.slice(PHONE_PREFIX.length)
-    : value.replace(/\D/g, '')
-
-  if (digits.startsWith('255')) digits = digits.slice(3)
-  if (digits.startsWith('0')) digits = digits.slice(1)
-
-  return digits.replace(/\D/g, '').slice(0, 9)
-}
-
-function formatPhoneFromDigits(digits) {
-  const clean = String(digits || '').replace(/\D/g, '').slice(0, 9)
-  return clean ? `${PHONE_PREFIX}${clean}` : ''
-}
-
-function updatePhoneField(target, key, rawValue) {
-  target[key] = formatPhoneFromDigits(extractPhoneDigits(rawValue))
-}
-
-function isValidPhoneDigits(digits) {
-  return PHONE_REGEX.test(digits || '')
-}
-
-function isValidEmail(value) {
-  return EMAIL_REGEX.test((value || '').trim())
-}
-
-function validatePhone() {
-  const digits = extractPhoneDigits(form.phone_number)
-
-  if (!digits) {
-    phoneError.value = 'Tafadhali jaza namba ya simu'
-    return false
-  }
-
-  if (!isValidPhoneDigits(digits)) {
-    phoneError.value = 'Ingiza namba sahihi ya simu (tarakimu 9, mfano: 712345678).'
-    return false
-  }
-
-  phoneError.value = ''
-  return true
-}
-
-function validateSpousePhone() {
-  if (!isMarried.value) {
-    spousePhoneError.value = ''
-    return true
-  }
-
-  const digits = extractPhoneDigits(form.spouse.phone_number)
-
-  if (!digits) {
-    spousePhoneError.value = 'Namba ya simu ya mwenzi inahitajika.'
-    return false
-  }
-
-  if (!isValidPhoneDigits(digits)) {
-    spousePhoneError.value = 'Ingiza namba sahihi ya simu ya mwenzi (tarakimu 9, mfano: 712345678).'
-    return false
-  }
-
-  spousePhoneError.value = ''
-  return true
-}
-
-function validateEmergencyPhone() {
-  const digits = extractPhoneDigits(form.emergency_contact_phone)
-
-  if (!digits) {
-    emergencyPhoneError.value = 'Namba ya dharura ni lazima.'
-    return false
-  }
-
-  if (!isValidPhoneDigits(digits)) {
-    emergencyPhoneError.value = 'Ingiza namba sahihi ya dharura (tarakimu 9, mfano: 712345678).'
-    return false
-  }
-
-  emergencyPhoneError.value = ''
-  return true
-}
-
-function validateEmail() {
-  const value = (form.email || '').trim()
-
-  if (!value) {
-    emailError.value = 'Barua pepe inahitajika.'
-    return false
-  }
-
-  if (!isValidEmail(value)) {
-    emailError.value = 'Ingiza barua pepe sahihi (mfano: jina@mfano.com).'
-    return false
-  }
-
-  emailError.value = ''
-  return true
-}
-
-function validateSpouseEmail() {
-  if (!isMarried.value) {
-    spouseEmailError.value = ''
-    return true
-  }
-
-  const value = (form.spouse.email || '').trim()
-
-  if (!value) {
-    spouseEmailError.value = 'Barua pepe ya mwenzi inahitajika.'
-    return false
-  }
-
-  if (!isValidEmail(value)) {
-    spouseEmailError.value = 'Ingiza barua pepe sahihi ya mwenzi (mfano: jina@mfano.com).'
-    return false
-  }
-
-  spouseEmailError.value = ''
-  return true
-}
-
-function validateResidence() {
-  const value = (form.residence || '').trim()
-
-  if (!value) {
-    residenceError.value = 'Mahali anapoishi ni lazima.'
-    return false
-  }
-
-  residenceError.value = ''
-  return true
-}
-
-/* =========================================================
-   IDENTITY / DUPLICATE HELPERS
-   ========================================================= */
+   DUPLICATE DETECTION
+   A member must not be registered twice, regardless of which
+   admin is signed in.
+========================================================= */
 
 function normalizeValue(value) {
   return String(value || '')
