@@ -1024,6 +1024,163 @@ function normalizePhone(value) {
   return String(value || '').replace(/\D/g, '')
 }
 
+/* =========================================================
+   PHONE INPUT / VALIDATION HELPERS
+   Tanzania mobile numbers are stored as +255XXXXXXXXX.
+   The UI shows +255 separately and accepts the local 9 digits.
+========================================================= */
+function extractPhoneDigits(value) {
+  let digits = normalizePhone(value)
+
+  if (digits.startsWith('255')) {
+    digits = digits.slice(3)
+  } else if (digits.startsWith('0')) {
+    digits = digits.slice(1)
+  }
+
+  return digits.slice(0, 9)
+}
+
+function updatePhoneField(target, key, value) {
+  if (!target || typeof target !== 'object') return
+  target[key] = extractPhoneDigits(value)
+}
+
+function normalizeStoredPhone(value) {
+  const digits = extractPhoneDigits(value)
+  return digits ? `+255${digits}` : null
+}
+
+const phoneError = ref('')
+const emailError = ref('')
+const residenceError = ref('')
+const spousePhoneError = ref('')
+const spouseEmailError = ref('')
+const emergencyPhoneError = ref('')
+
+function isValidTanzaniaMobile(value, required = true) {
+  const digits = extractPhoneDigits(value)
+
+  if (!digits) return !required
+
+  return /^[67]\d{8}$/.test(digits)
+}
+
+function validatePhone() {
+  const digits = extractPhoneDigits(form.phone_number)
+
+  if (!digits) {
+    phoneError.value = 'Namba ya simu ni lazima.'
+    return false
+  }
+
+  if (!isValidTanzaniaMobile(digits)) {
+    phoneError.value = 'Tumia namba ya Tanzania yenye tarakimu 9, mfano 712345678.'
+    return false
+  }
+
+  form.phone_number = normalizeStoredPhone(digits)
+  phoneError.value = ''
+  return true
+}
+
+function validateEmail() {
+  const email = String(form.email || '').trim()
+
+  if (!email) {
+    emailError.value = 'Barua pepe ni lazima.'
+    return false
+  }
+
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+
+  if (!valid) {
+    emailError.value = 'Andika barua pepe sahihi.'
+    return false
+  }
+
+  form.email = email.toLowerCase()
+  emailError.value = ''
+  return true
+}
+
+function validateResidence() {
+  const residence = String(form.residence || '').trim()
+
+  if (!residence) {
+    residenceError.value = 'Anwani/Makazi ni lazima.'
+    return false
+  }
+
+  if (residence.length < 3) {
+    residenceError.value = 'Andika anwani/makazi kwa usahihi.'
+    return false
+  }
+
+  residenceError.value = ''
+  return true
+}
+
+function validateSpousePhone() {
+  if (!isMarried.value || !form.spouse?.full_name) {
+    spousePhoneError.value = ''
+    return true
+  }
+
+  const digits = extractPhoneDigits(form.spouse.phone_number)
+
+  if (!digits) {
+    spousePhoneError.value = 'Namba ya simu ya mwenzi ni lazima.'
+    return false
+  }
+
+  if (!isValidTanzaniaMobile(digits)) {
+    spousePhoneError.value = 'Tumia namba ya Tanzania yenye tarakimu 9.'
+    return false
+  }
+
+  form.spouse.phone_number = normalizeStoredPhone(digits)
+  spousePhoneError.value = ''
+  return true
+}
+
+function validateSpouseEmail() {
+  if (!isMarried.value || !form.spouse?.email) {
+    spouseEmailError.value = ''
+    return true
+  }
+
+  const email = String(form.spouse.email).trim()
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+
+  if (!valid) {
+    spouseEmailError.value = 'Barua pepe ya mwenzi si sahihi.'
+    return false
+  }
+
+  form.spouse.email = email.toLowerCase()
+  spouseEmailError.value = ''
+  return true
+}
+
+function validateEmergencyPhone() {
+  const digits = extractPhoneDigits(form.emergency_contact_phone)
+
+  if (!digits) {
+    emergencyPhoneError.value = 'Namba ya dharura ni lazima.'
+    return false
+  }
+
+  if (!isValidTanzaniaMobile(digits)) {
+    emergencyPhoneError.value = 'Tumia namba ya Tanzania yenye tarakimu 9.'
+    return false
+  }
+
+  form.emergency_contact_phone = normalizeStoredPhone(digits)
+  emergencyPhoneError.value = ''
+  return true
+}
+
 function isSamePerson(a, b) {
   const nameA = normalizeValue(a.full_name)
   const nameB = normalizeValue(b.full_name)
@@ -1168,7 +1325,7 @@ function cleanChild(child, residentId = null) {
     full_name: toUpper((child.full_name || child.name || '').trim()),
     gender: child.gender || null,
     date_of_birth: child.date_of_birth || null,
-    phone_number: (child.phone_number || '').trim() || null,
+    phone_number: normalizeStoredPhone(child.phone_number),
     email: (child.email || '').trim() || null,
     residence: toUpper((child.residence || '').trim()) || null,
     is_baptized: baptized,
@@ -1198,7 +1355,7 @@ function cleanSpouse(spouse, married, residentId = null) {
     full_name: toUpper((spouse.full_name || '').trim()),
     gender: spouseGender || null,
     date_of_birth: spouse.date_of_birth || null,
-    phone_number: (spouse.phone_number || '').trim() || null,
+    phone_number: normalizeStoredPhone(spouse.phone_number),
     email: (spouse.email || '').trim() || null,
     is_baptized: baptized,
     baptism_year: baptized && spouse.baptism_year ? Number(spouse.baptism_year) : null,
@@ -1227,7 +1384,7 @@ function cleanFamilyMembers(members) {
         relationship: toUpper((member.relationship || '').trim()) || null,
         gender: member.gender || null,
         date_of_birth: member.date_of_birth || null,
-        phone_number: (member.phone_number || '').trim() || null,
+        phone_number: normalizeStoredPhone(member.phone_number),
         email: (member.email || '').trim() || null,
         residence: toUpper((member.residence || '').trim()) || null,
         is_baptized: baptized,
@@ -1633,7 +1790,7 @@ async function saveResident() {
       gender: form.gender,
       date_of_birth: form.date_of_birth || null,
       marital_status: form.marital_status || null,
-      phone_number: form.phone_number || null,
+      phone_number: normalizeStoredPhone(form.phone_number),
       email: form.email || null,
       residence: toUpper(form.residence || null),
 
@@ -1648,7 +1805,7 @@ async function saveResident() {
       children: married ? form.children.map(child => cleanChild(child)).filter(child => child.full_name) : [],
       family_members: cleanFamilyMembers(form.family_members),
       emergency_contact_name: toUpper(form.emergency_contact_name || null),
-      emergency_contact_phone: form.emergency_contact_phone || null,
+      emergency_contact_phone: normalizeStoredPhone(form.emergency_contact_phone),
 
       is_tucasa_member: student,
       institution_name: student ? toUpper(form.institution_name || null) : null,
