@@ -24,7 +24,7 @@
 
       <div class="admin-login-label">
         <span></span>
-        <strong>ADMIN LOGIN</strong>
+        <strong>INGIA KAMA MSIMAMIZI</strong>
         <span></span>
       </div>
 
@@ -187,8 +187,8 @@ async function login() {
 }
 
 .church-logo-wrap {
-  width: 94px;
-  height: 94px;
+  width: 70px;
+  height: 70px;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -87,15 +87,14 @@
             </div>
           </template>
           <p v-else>
-            Sawa — jaza namba yako ya simu na barua pepe uliyotumia mara ya kwanza hapa chini,
-            ili mfumo ukupatie taarifa zako za awali badala ya kutengeneza taarifa mpya.
+            Sawa — jaza taarifa zako kwa usahihi sasa
           </p>
         </div>
 
         <label>
           <span>Jinsia yangu <b>*</b></span>
           <select v-model="form.gender" required>
-            <option disabled value="">Chagua jinsia yangu</option>
+            <option disabled value="">Chagua jinsia</option>
             <option value="Mwanaume">Mwanaume</option>
             <option value="Mwanamke">Mwanamke</option>
           </select>
@@ -186,7 +185,7 @@
                 type="number"
                 min="1900"
                 :max="currentYear"
-                placeholder="Mfano: 2018"
+                placeholder="Mfano: 2014"
               />
             </label>
             <label>
@@ -218,6 +217,7 @@
           <span>Wadhifa wangu</span>
           <select v-model="form.church_role">
             <option value="">Chagua wadhifa </option>
+            <option value="Muumini">Muumini</option>
             <option value="Mshiriki">Mshiriki</option>
             <option value="Kiongozi">Kiongozi</option>
             <option value="Mchungaji">Mchungaji</option>
@@ -231,7 +231,7 @@
           <span class="form-section-number">3</span>
           <h3>Taarifa za Familia Yangu</h3>
           <span v-if="!isMarried" class="form-section-hint">
-            Taarifa za mwenzi wangu zitaonekana ikiwa Nimeoa/Nimeolewa. Taarifa za watoto ni hiari kwa kila mtu.
+            Taarifa za mwenzi wangu zitaonekana ikiwa Nimeoa/Nimeolewa.
           </span>
         </div>
 
@@ -336,6 +336,7 @@
             <span>Wadhifa (Mwenzi wangu)</span>
             <select v-model="form.spouse.church_role">
               <option value="">Chagua wadhifa</option>
+              <option value="Muumini">Muumini</option>
               <option value="Mshiriki">Mshiriki</option>
               <option value="Kiongozi">Kiongozi</option>
               <option value="Mchungaji">Mchungaji</option>
@@ -422,7 +423,7 @@
                   <label><span>Ushirika ulipo</span><input v-model.trim="child.church_area" @blur="upperize(child, 'church_area')" /></label>
                 </template>
                 <label><span>Idara/Kikundi</span><input v-model.trim="child.ministry_group" list="ministry-group-options" @blur="upperize(child, 'ministry_group')" /></label>
-                <label><span>Wadhifa</span><select v-model="child.church_role"><option value="">Chagua wadhifa</option><option value="Mshiriki">Mshiriki</option><option value="Kiongozi">Kiongozi</option></select></label>
+                <label><span>Wadhifa</span><select v-model="child.church_role"><option value="">Chagua wadhifa</option><option value="Muumini">Muumini</option><option value="Mshiriki">Mshiriki</option><option value="Kiongozi">Kiongozi</option></select></label>
                 <label class="span-2"><span>Mahitaji Maalum</span><input v-model.trim="child.special_needs" placeholder="Mfano: Anahitaji msaada maalum" @blur="upperize(child, 'special_needs')" /></label>
                 <div class="subsection-label span-2">Taarifa za Ziada za Mtoto</div>
                 <label>
@@ -486,7 +487,7 @@
                 <label><span>Ushirika ulipo</span><input v-model.trim="member.church_area" @blur="upperize(member, 'church_area')" /></label>
               </template>
               <label><span>Idara/Kikundi</span><input v-model.trim="member.ministry_group" list="ministry-group-options" @blur="upperize(member, 'ministry_group')" /></label>
-              <label><span>Wadhifa</span><select v-model="member.church_role"><option value="">Chagua wadhifa</option><option value="Mshiriki">Mshiriki</option><option value="Kiongozi">Kiongozi</option><option value="Mchungaji">Mchungaji</option><option value="Mzee">Mzee</option></select></label>
+              <label><span>Wadhifa</span><select v-model="member.church_role"><option value="">Chagua wadhifa</option><option value="Muumini">Muumini</option><option value="Mshiriki">Mshiriki</option><option value="Kiongozi">Kiongozi</option><option value="Mchungaji">Mchungaji</option><option value="Mzee">Mzee</option></select></label>
               <label class="span-2"><span>Mahitaji Maalum</span><input v-model.trim="member.special_needs" placeholder="Mfano: Anahitaji msaada maalum" @blur="upperize(member, 'special_needs')" /></label>
               <div class="subsection-label span-2">Taarifa za Ziada za Mwanafamilia</div>
               <label>
@@ -518,6 +519,7 @@
         </button>
 
         <datalist id="relationship-options">
+          <option value="Mtoto" />
           <option value="Baba" />
           <option value="Mama" />
           <option value="Kaka" />
@@ -1386,8 +1388,8 @@ async function saveProfile() {
 
 .topbar {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
   padding-bottom: 20px;
@@ -1397,13 +1399,15 @@ async function saveProfile() {
 
 .brand-area {
   display: flex;
+  flex-direction: column;
   align-items: center;
+  text-align: center;
   gap: 14px;
 }
 
 .brand-logo {
-  width: 52px;
-  height: 52px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: #0d2137;
   display: flex;
@@ -1420,7 +1424,7 @@ async function saveProfile() {
 
 .eyebrow {
   margin: 0 0 2px;
-  color: #667085;
+  color: #ab9209;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -1435,13 +1439,14 @@ async function saveProfile() {
 
 .brand-subtitle {
   margin: 2px 0 0;
-  color: #667085;
+  color: #0d2137;
   font-size: 13px;
 }
 
 .topbar-actions {
   display: flex;
   align-items: center;
+  align-self: flex-end;
   gap: 14px;
 }
 
@@ -1453,7 +1458,7 @@ async function saveProfile() {
 }
 
 .admin-label {
-  color: #98a2b3;
+  color: #0d2137;
 }
 
 .admin-email {

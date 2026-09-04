@@ -256,6 +256,7 @@
           <span>Wadhifa</span>
           <select v-model="form.church_role">
             <option value="">Chagua wadhifa</option>
+            <option value="Muumini">Muumini</option>
             <option value="Mshiriki">Mshiriki</option>
             <option value="Kiongozi">Kiongozi</option>
             <option value="Mchungaji">Mchungaji</option>
@@ -372,6 +373,7 @@
             <span>Wadhifa (Mwenzi)</span>
             <select v-model="form.spouse.church_role">
               <option value="">Chagua wadhifa</option>
+              <option value="Muumini">Muumini</option>
               <option value="Mshiriki">Mshiriki</option>
               <option value="Kiongozi">Kiongozi</option>
               <option value="Mchungaji">Mchungaji</option>
@@ -457,7 +459,7 @@
                   <label><span>Ushirika ulipo</span><input v-model.trim="child.church_area" placeholder="Mfano: Golani SDA" @blur="upperize(child, 'church_area')" /></label>
                 </template>
                 <label><span>Idara/Kikundi</span><input v-model.trim="child.ministry_group" list="ministry-group-options" @blur="upperize(child, 'ministry_group')" /></label>
-                <label><span>Wadhifa</span><select v-model="child.church_role"><option value="">Chagua wadhifa</option><option value="Mshiriki">Mshiriki</option><option value="Kiongozi">Kiongozi</option></select></label>
+                <label><span>Wadhifa</span><select v-model="child.church_role"><option value="">Chagua wadhifa</option><option value="Muumini">Muumini</option><option value="Mshiriki">Mshiriki</option><option value="Kiongozi">Kiongozi</option></select></label>
                 <label class="span-2"><span>Mahitaji Maalum</span><input v-model.trim="child.special_needs" placeholder="Mfano: Anahitaji msaada maalum" @blur="upperize(child, 'special_needs')" /></label>
 
                 <div class="subsection-label span-2">Taarifa za Ziada za Mtoto</div>
@@ -522,7 +524,7 @@
                 <label><span>Ushirika ulipo</span><input v-model.trim="member.church_area" @blur="upperize(member, 'church_area')" /></label>
               </template>
               <label><span>Idara/Kikundi</span><input v-model.trim="member.ministry_group" list="ministry-group-options" @blur="upperize(member, 'ministry_group')" /></label>
-              <label><span>Wadhifa</span><select v-model="member.church_role"><option value="">Chagua wadhifa</option><option value="Mshiriki">Mshiriki</option><option value="Kiongozi">Kiongozi</option><option value="Mchungaji">Mchungaji</option><option value="Mzee">Mzee</option></select></label>
+              <label><span>Wadhifa</span><select v-model="member.church_role"><option value="">Chagua wadhifa</option><option value="Muumini">Muumini</option><option value="Mshiriki">Mshiriki</option><option value="Kiongozi">Kiongozi</option><option value="Mchungaji">Mchungaji</option><option value="Mzee">Mzee</option></select></label>
               <label class="span-2"><span>Mahitaji Maalum</span><input v-model.trim="member.special_needs" placeholder="Mfano: Anahitaji msaada maalum" @blur="upperize(member, 'special_needs')" /></label>
 
               <div class="subsection-label span-2">Taarifa za Ziada za Mwanafamilia</div>
@@ -555,6 +557,7 @@
         </button>
 
         <datalist id="relationship-options">
+          <option value="Mtoto" />
           <option value="Baba" />
           <option value="Mama" />
           <option value="Kaka" />
@@ -2292,9 +2295,9 @@ function exportExcel() {
   min-height: 100px;
   padding: 18px 26px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 25px;
+  gap: 18px;
   background: linear-gradient(135deg, var(--church-blue) 0%, var(--church-blue-dark) 100%);
   border-radius: 18px;
   box-shadow: 0 14px 34px rgba(18, 48, 79, 0.28);
@@ -2317,8 +2320,10 @@ function exportExcel() {
 
 .brand-area {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 16px;
+  text-align: center;
+  gap: 12px;
   min-width: 0;
   position: relative;
   z-index: 1;
@@ -2377,6 +2382,7 @@ function exportExcel() {
 .topbar-actions {
   display: flex;
   align-items: center;
+  align-self: flex-end;
   gap: 16px;
   position: relative;
   z-index: 1;
@@ -3353,12 +3359,13 @@ td strong {
 @media (max-width: 820px) {
 
   .topbar {
-    align-items: flex-start;
+    align-items: center;
     flex-direction: column;
   }
 
   .topbar-actions {
     width: 100%;
+    align-self: center;
     justify-content: space-between;
   }
 
