@@ -12,7 +12,7 @@
         </div>
 
         <div class="brand-text">
-          <p class="eyebrow">GOLANI SDA CHURCH</p>
+          <p class="eyebrow">Kanisa la Waadventista wa Sabato Golani</p>
           <h1>Church Members Registration</h1>
           <p class="brand-subtitle">Member information management portal</p>
         </div>
@@ -268,8 +268,11 @@
         <div class="form-section">
           <span class="form-section-number">3</span>
           <h3>Taarifa za Familia</h3>
-          <span v-if="!isMarried" class="form-section-hint">
-            Taarifa za mwenzi na watoto zitaonekana akichagua Hali ya Ndoa: Ameoa/Ameolewa
+          <span v-if="!isMarried && !canHaveChildren" class="form-section-hint">
+            Taarifa za mwenzi zitaonekana akichagua Ameoa/Ameolewa. Taarifa za watoto zinapatikana pia kwa Mjane, Mgane na Talaka.
+          </span>
+          <span v-else-if="!isMarried" class="form-section-hint">
+            Taarifa za mwenzi zitaonekana akichagua Hali ya Ndoa: Ameoa/Ameolewa
           </span>
         </div>
 
@@ -407,6 +410,11 @@
             <span>Vipaji/Mahususi (Mwenzi)</span>
             <input v-model.trim="form.spouse.skills" placeholder="Mfano: Muziki, Ufundishaji, Upishi" @blur="upperize(form.spouse, 'skills')" />
           </label>
+
+        </template>
+
+        <!-- Watoto wanapatikana kwa: Ameoa/Ameolewa, Mjane, Mgane, Talaka (ni hiari) -->
+        <template v-if="canHaveChildren">
 
           <!-- ---------- Watoto ---------- -->
           <div class="subsection-label span-2">Watoto</div>
@@ -803,9 +811,9 @@
           </div>
         </div>
 
-        <div v-if="detailResident.marital_status === 'Ameoa/Ameolewa'" class="detail-section">
+        <div v-if="(detailResident.children || []).length" class="detail-section">
           <h4>3b. Watoto</h4>
-          <div v-if="(detailResident.children || []).length" class="children-details">
+          <div class="children-details">
             <div v-for="(child, idx) in detailResident.children" :key="idx" class="family-detail-card">
               <strong>Mtoto #{{ idx + 1 }} — {{ child.full_name || child.name || '—' }}</strong>
               <div class="detail-grid">
@@ -832,9 +840,6 @@
                 <div><span>Vipaji/Mahususi</span><strong>{{ child.skills || '—' }}</strong></div>
               </div>
             </div>
-          </div>
-          <div v-else class="detail-grid">
-            <div class="span-2"><span>Watoto</span><strong>—</strong></div>
           </div>
         </div>
 
@@ -988,6 +993,15 @@ const emptyForm = () => ({
 const form = reactive(emptyForm())
 
 const isMarried = computed(() => form.marital_status === 'Ameoa/Ameolewa')
+
+/*
+ * Mjane, Mgane na Talaka pia wanaweza kuwa na watoto (kwa mfano kabla ya
+ * kufiwa au kuachana), hivyo sehemu ya Watoto inaonekana kwa hali hizi
+ * nne za ndoa. Ni HIARI kujaza — mtumiaji anaweza kuacha bila mtoto yeyote.
+ */
+const canHaveChildren = computed(() =>
+  ['Ameoa/Ameolewa', 'Mjane', 'Mgane', 'Talaka'].includes(form.marital_status),
+)
 
 function getOppositeGender(gender) {
   if (gender === 'Mwanaume') return 'Mwanamke'
@@ -1802,7 +1816,9 @@ async function saveResident() {
       church_role: form.church_role || null,
 
       spouse: cleanSpouse(form.spouse, married),
-      children: married ? form.children.map(child => cleanChild(child)).filter(child => child.full_name) : [],
+      children: canHaveChildren.value
+        ? form.children.map(child => cleanChild(child)).filter(child => child.full_name)
+        : [],
       family_members: cleanFamilyMembers(form.family_members),
       emergency_contact_name: toUpper(form.emergency_contact_name || null),
       emergency_contact_phone: normalizeStoredPhone(form.emergency_contact_phone),
@@ -2329,11 +2345,12 @@ function exportExcel() {
 
 .brand-text {
   min-width: 0;
+  color: #d4af1f;
 }
 
 .eyebrow {
   margin: 0 0 4px;
-  color: var(--church-blue-dark);
+  color: #d4af1f;
   background: var(--white);
   display: inline-block;
   padding: 3px 10px;

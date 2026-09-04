@@ -5,14 +5,12 @@
          TOP BAR
     ====================================================== -->
     <header class="topbar">
-
       <div class="brand-area">
         <div class="brand-logo">
           <img :src="logo" alt="Golani SDA Church" />
         </div>
-
         <div class="brand-text">
-          <p class="eyebrow">GOLANI SDA CHURCH</p>
+          <p class="eyebrow">KANISA LA WAADVENTISTA WA SABATO GOLANI</p>
           <h1>Karibu sana na ujaze taarifa zako kwa usahihi</h1>
           <p class="brand-subtitle"></p>
         </div>
@@ -23,12 +21,10 @@
           <span class="admin-label">Nimeingia kama</span>
           <span class="admin-email">{{ guestMode ? 'Mtumiaji wa kawaida' : session?.user?.email }}</span>
         </div>
-
         <button class="ghost-button" type="button" @click="$emit('logged-out')">
           Toka
         </button>
       </div>
-
     </header>
 
 
@@ -113,12 +109,12 @@
         <label>
           <span>Hali yangu ya ndoa</span>
           <select v-model="form.marital_status" required>
-            <option value="">Chagua ya ndoa</option>
-            <!-- value = thamani inayokubalika na database, label = nafsi ya kwanza -->
+            <option value="">Chagua Hali ya ndoa</option>
+            <!-- value = thamani inayokubalika na database (CHECK constraint), label = nafsi ya kwanza -->
             <option value="Hajaoa/Hajaolewa">Sijaoa/Sijaolewa</option>
             <option value="Ameoa/Ameolewa">Nimeoa/Nimeolewa</option>
             <option value="Mjane">Nimefiwa (Mjane)</option>
-            <option value="Mjane wa kiume">Nimefiwa (Mgane)</option>
+            <option value="Mgane">Nimefiwa (Mgane)</option>
             <option value="Talaka">Nimeachika (Talaka)</option>
           </select>
         </label>
@@ -193,12 +189,10 @@
                 placeholder="Mfano: 2018"
               />
             </label>
-
             <label>
               <span>Kanisa nilipobatizwa</span>
               <input v-model.trim="form.baptism_place" placeholder="Mfano: Golani SDA Church" @blur="upperize(form, 'baptism_place')" />
             </label>
-
             <label>
               <span>Ushirika wangu ulipo</span>
               <input v-model.trim="form.church_area" placeholder="Mfano: Golani SDA" @blur="upperize(form, 'church_area')" />
@@ -237,13 +231,13 @@
           <span class="form-section-number">3</span>
           <h3>Taarifa za Familia Yangu</h3>
           <span v-if="!isMarried" class="form-section-hint">
-            Taarifa za mwenzi wangu na watoto zitaonekana ikiwa Nimeoa/Nimeolewa
+            Taarifa za mwenzi wangu zitaonekana ikiwa Nimeoa/Nimeolewa. Taarifa za watoto ni hiari kwa kila mtu.
           </span>
         </div>
 
+        <!-- ---------- Mwenzi Wangu: ipo tu kwa waliooa/waliolewa ---------- -->
         <template v-if="isMarried">
 
-          <!-- ---------- Mwenzi Wangu: Taarifa Binafsi ---------- -->
           <div class="subsection-label span-2">Taarifa Binafsi za Mwenzi Wangu</div>
 
           <label>
@@ -298,7 +292,6 @@
             <small v-if="spouseEmailError" class="field-error">{{ spouseEmailError }}</small>
           </label>
 
-          <!-- ---------- Mwenzi Wangu: Taarifa za Kiroho / Kanisa ---------- -->
           <div class="subsection-label span-2">Taarifa za Kiroho / Kanisa za Mwenzi Wangu</div>
 
           <label>
@@ -323,12 +316,10 @@
                   placeholder="Mfano: 2018"
                 />
               </label>
-
               <label>
                 <span>Mahali alipobatizwa (Mwenzi wangu)</span>
                 <input v-model.trim="form.spouse.baptism_place" placeholder="Mfano: Golani SDA Church" @blur="upperize(form.spouse, 'baptism_place')" />
               </label>
-
               <label>
                 <span>Ushirika ulipo (Mwenzi wangu)</span>
                 <input v-model.trim="form.spouse.church_area" placeholder="Mfano: Golani SDA" @blur="upperize(form.spouse, 'church_area')" />
@@ -357,7 +348,6 @@
             <input v-model.trim="form.spouse.special_needs" placeholder="Mfano: Anahitaji msaada maalum" @blur="upperize(form.spouse, 'special_needs')" />
           </label>
 
-          <!-- ---------- Mwenzi Wangu: Taarifa za Ziada ---------- -->
           <div class="subsection-label span-2">Taarifa za Ziada za Mwenzi Wangu</div>
 
           <label>
@@ -384,11 +374,18 @@
             <input v-model.trim="form.spouse.skills" placeholder="Mfano: Muziki, Ufundishaji, Upishi" @blur="upperize(form.spouse, 'skills')" />
           </label>
 
-          <!-- ---------- Watoto Wangu ---------- -->
-          <div class="subsection-label span-2">Watoto Wangu</div>
+        </template>
+
+        <!-- ---------- Watoto Wangu: HIARI kwa waliooa/waliolewa, waliofiwa
+             (Mjane/Mgane), na waliochika (Talaka). Si lazima kwa yeyote. ---------- -->
+        <template v-if="canHaveChildren">
+
+          <div class="subsection-label span-2">
+            Watoto Wangu <small>(Hiari)</small>
+          </div>
 
           <label>
-            <span>Idadi ya watoto wangu</span>
+            <span>Idadi ya watoto Kwenye familia</span>
             <input v-model="childrenCountModel" type="number" min="0" max="15" />
           </label>
 
@@ -412,7 +409,7 @@
                     type="tel"
                     inputmode="numeric"
                     maxlength="9"
-                    placeholder="7XXXXXXXX (hiari)"
+                    placeholder="7XXXXXXXX (kama ipo)"
                   />
                 </div>
                 <input v-model.trim="child.email" type="email" placeholder="Barua pepe (hiari)" />
@@ -421,13 +418,12 @@
                 <label><span>Amebatizwa?</span><select v-model="child.is_baptized"><option :value="false">Hapana</option><option :value="true">Ndiyo</option></select></label>
                 <template v-if="child.is_baptized">
                   <label><span>Mwaka wa ubatizo</span><input v-model="child.baptism_year" type="number" min="1900" :max="currentYear" /></label>
-                  <label><span>Kanisa alikobatiziwa</span><input v-model.trim="child.baptism_place" @blur="upperize(child, 'baptism_place')" /></label>
+                  <label><span>Kanisa alikobatizwa</span><input v-model.trim="child.baptism_place" @blur="upperize(child, 'baptism_place')" /></label>
                   <label><span>Ushirika ulipo</span><input v-model.trim="child.church_area" @blur="upperize(child, 'church_area')" /></label>
                 </template>
                 <label><span>Idara/Kikundi</span><input v-model.trim="child.ministry_group" list="ministry-group-options" @blur="upperize(child, 'ministry_group')" /></label>
                 <label><span>Wadhifa</span><select v-model="child.church_role"><option value="">Chagua wadhifa</option><option value="Mshiriki">Mshiriki</option><option value="Kiongozi">Kiongozi</option></select></label>
                 <label class="span-2"><span>Mahitaji Maalum</span><input v-model.trim="child.special_needs" placeholder="Mfano: Anahitaji msaada maalum" @blur="upperize(child, 'special_needs')" /></label>
-
                 <div class="subsection-label span-2">Taarifa za Ziada za Mtoto</div>
                 <label>
                   <span>Ni MwanaTUCASA?</span>
@@ -492,7 +488,6 @@
               <label><span>Idara/Kikundi</span><input v-model.trim="member.ministry_group" list="ministry-group-options" @blur="upperize(member, 'ministry_group')" /></label>
               <label><span>Wadhifa</span><select v-model="member.church_role"><option value="">Chagua wadhifa</option><option value="Mshiriki">Mshiriki</option><option value="Kiongozi">Kiongozi</option><option value="Mchungaji">Mchungaji</option><option value="Mzee">Mzee</option></select></label>
               <label class="span-2"><span>Mahitaji Maalum</span><input v-model.trim="member.special_needs" placeholder="Mfano: Anahitaji msaada maalum" @blur="upperize(member, 'special_needs')" /></label>
-
               <div class="subsection-label span-2">Taarifa za Ziada za Mwanafamilia</div>
               <label>
                 <span>MwanaTUCASA?</span>
@@ -601,10 +596,12 @@
         </div>
 
       </form>
+
     </section>
 
   </main>
 </template>
+
 
 <script setup>
 
@@ -678,20 +675,17 @@ const emptyForm = () => ({
   phone_number: '',
   email: '',
   residence: '',
-
   is_baptized: false,
   baptism_year: '',
   baptism_place: '',
   church_area: '',
   ministry_group: '',
   church_role: '',
-
   spouse: emptySpouse(),
   children: [],
   family_members: [],
   emergency_contact_name: '',
   emergency_contact_phone: '',
-
   is_tucasa_member: false,
   institution_name: '',
   occupation: '',
@@ -702,6 +696,16 @@ const emptyForm = () => ({
 const form = reactive(emptyForm())
 
 const isMarried = computed(() => form.marital_status === 'Ameoa/Ameolewa')
+
+/* Mjane (bereaved, female), Mgane (bereaved, male) na Talaka (divorced)
+   wote wanaweza kuwa na watoto tayari, hata kama hawana mwenzi kwa sasa.
+   Hivyo sehemu ya "Watoto Wangu" inaonekana (kama HIARI) kwa hali zote
+   hizi, si tu kwa walioolewa/walioa. */
+const isWidowedOrDivorced = computed(() =>
+  ['Mjane', 'Mgane', 'Talaka'].includes(form.marital_status),
+)
+
+const canHaveChildren = computed(() => isMarried.value || isWidowedOrDivorced.value)
 
 const nameDuplicateMessage = computed(() => {
   if (!nameDuplicateInfo.value) return ''
@@ -752,7 +756,6 @@ const emergencyPhoneError = ref('')
 
 function extractPhoneDigits(raw) {
   const value = raw || ''
-
   let digits = value.startsWith(PHONE_PREFIX)
     ? value.slice(PHONE_PREFIX.length)
     : value.replace(/\D/g, '')
@@ -1058,7 +1061,6 @@ function fillForm(resident) {
   form.phone_number = resident.phone_number || ''
   form.email = resident.email || ''
   form.residence = resident.residence || ''
-
   form.is_baptized = !!resident.is_baptized
   form.baptism_year = resident.baptism_year || ''
   form.baptism_place = resident.baptism_place || ''
@@ -1136,7 +1138,6 @@ function fillForm(resident) {
 
   form.emergency_contact_name = resident.emergency_contact_name || ''
   form.emergency_contact_phone = resident.emergency_contact_phone || ''
-
   form.is_tucasa_member = !!resident.is_tucasa_member
   form.institution_name = resident.institution_name || ''
   form.occupation = resident.occupation || ''
@@ -1257,6 +1258,7 @@ async function saveProfile() {
 
   try {
     const married = isMarried.value
+    const childrenAllowed = canHaveChildren.value
     const student = form.is_tucasa_member
     const baptized = form.is_baptized
 
@@ -1277,7 +1279,7 @@ async function saveProfile() {
       church_role: form.church_role || null,
 
       spouse: married ? cleanSpouse(form.spouse) : null,
-      children: married ? form.children.map(cleanChild).filter((child) => child.full_name) : [],
+      children: childrenAllowed ? form.children.map(cleanChild).filter((child) => child.full_name) : [],
       family_members: cleanFamilyMembers(form.family_members),
       emergency_contact_name: toUpper((form.emergency_contact_name || '').trim()) || null,
       emergency_contact_phone: form.emergency_contact_phone || null,
@@ -1322,8 +1324,9 @@ async function saveProfile() {
 
       myResidentId.value = data.id
       message.value = data.was_update
-        ? 'Taarifa zako zimesasishwa kwa mafanikio.'
-        : 'Hongera! Taarifa zako zimehifadhiwa kwa mafanikio.'
+        ? 'Taarifa zako zimesasishwa'
+        : 'Hongera! Taarifa zako zimehifadhiwa.'
+
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
@@ -1387,10 +1390,8 @@ async function saveProfile() {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-
   padding-bottom: 20px;
   margin-bottom: 24px;
-
   border-bottom: 1px solid rgba(13, 33, 55, 0.1);
 }
 
@@ -1720,6 +1721,15 @@ async function saveProfile() {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-top: 6px;
+}
+
+.subsection-label small {
+  font-size: 10px;
+  font-weight: 700;
+  color: #98a2b3;
+  text-transform: none;
+  letter-spacing: normal;
+  margin-left: 6px;
 }
 
 .children-list,
