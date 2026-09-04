@@ -452,8 +452,8 @@
 
         </template>
 
-        <!-- ---------- Wanafamilia Wangu Wengine (siyo mtoto) ---------- -->
-        <div class="subsection-label span-2">Wanafamilia Wangu Wengine (siyo mtoto)</div>
+        <!-- ---------- Wanafamilia Wangu Wengine  ---------- -->
+        <div class="subsection-label span-2">Wanafamilia Wangu Wengine</div>
 
         <div v-if="form.family_members.length" class="family-members-list span-2">
           <div v-for="(member, index) in form.family_members" :key="index" class="family-member-card">
@@ -1593,26 +1593,57 @@ async function saveProfile(payload) {
 </script>
 
 <style scoped>
-/* Mtindo huu unafanana na AdminDashboard.vue ili muonekano
-   ubaki sawa kati ya panel ya admin na hii ya mshiriki. */
-
+/* =========================================================
+   THEME TOKENS — navy + gold, matched to the church site
+   ========================================================= */
 .dashboard {
+  --navy-950: #071527;
+  --navy-900: #0d2137;
+  --navy-800: #16324a;
+  --gold-500: #c9a227;
+  --gold-400: #e0b93a;
+  --gold-100: #fdf3d7;
+  --border-soft: rgba(13, 33, 55, 0.09);
+  --shadow-soft: 0 10px 30px rgba(13, 33, 55, 0.08);
+  --shadow-lift: 0 18px 40px rgba(13, 33, 55, 0.16);
+
   min-height: 100vh;
   padding: 28px 32px 60px;
-  background: #f5f7fa;
+  background:
+    radial-gradient(1100px 480px at 12% -10%, rgba(201, 162, 39, 0.10), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(13, 33, 55, 0.08), transparent 55%),
+    linear-gradient(180deg, #eef2f7 0%, #f5f7fb 40%, #f7f8fb 100%);
   color: #0d2137;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* =========================================================
+   TOPBAR
+   ========================================================= */
 .topbar {
   display: flex;
   flex-direction: column;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
-  padding-bottom: 20px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid rgba(13, 33, 55, 0.1);
+  gap: 18px;
+  padding: 26px 28px;
+  margin-bottom: 28px;
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0a1c30 0%, #0d2137 45%, #123253 100%);
+  box-shadow: var(--shadow-lift);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.topbar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(420px 220px at 15% 0%, rgba(201, 162, 39, 0.25), transparent 65%),
+    radial-gradient(360px 220px at 100% 100%, rgba(255, 255, 255, 0.06), transparent 60%);
+  pointer-events: none;
 }
 
 .brand-area {
@@ -1621,43 +1652,35 @@ async function saveProfile(payload) {
   align-items: center;
   text-align: center;
   gap: 14px;
+  position: relative;
+  z-index: 1;
 }
 
-.brand-logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #0d2137;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.brand-logo img {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-}
+.brand-logo { width: 40px; height: 40px; border-radius: 50%; background: #0d2137; display: flex; align-items: center; justify-content: center; overflow: hidden; } .brand-logo img { width: 40px; height: 40px; object-fit: contain; }
 
 .eyebrow {
   margin: 0 0 2px;
-  color: #ab9209;
+  background: linear-gradient(90deg, var(--gold-400), #f3d778 60%, var(--gold-400));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
 .topbar h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 21px;
   font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.01em;
 }
 
 .brand-subtitle {
   margin: 2px 0 0;
-  color: #0d2137;
+  color: rgba(255, 255, 255, 0.75);
   font-size: 13px;
 }
 
@@ -1666,6 +1689,8 @@ async function saveProfile(payload) {
   align-items: center;
   align-self: flex-end;
   gap: 14px;
+  position: relative;
+  z-index: 1;
 }
 
 .admin-info {
@@ -1676,51 +1701,68 @@ async function saveProfile(payload) {
 }
 
 .admin-label {
-  color: #0d2137;
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .admin-email {
   font-weight: 700;
+  color: #fff;
 }
 
 .ghost-button {
-  background: transparent;
-  border: 1px solid rgba(13, 33, 55, 0.2);
-  color: #0d2137;
-  padding: 9px 16px;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  padding: 9px 18px;
+  border-radius: 10px;
   font-weight: 700;
   font-size: 13px;
   cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: all 0.25s ease;
 }
 
 .ghost-button:hover {
-  background: rgba(13, 33, 55, 0.06);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
 }
 
+/* =========================================================
+   BUTTONS
+   ========================================================= */
 .primary-button,
 .secondary-button {
-  padding: 12px 20px;
-  border-radius: 10px;
+  padding: 12px 22px;
+  border-radius: 12px;
   font-weight: 800;
   font-size: 14px;
   cursor: pointer;
   border: 1px solid transparent;
+  transition: transform 0.2s ease, box-shadow 0.25s ease, background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
 
 .primary-button {
-  background: #0d2137;
+  background: linear-gradient(135deg, #123253 0%, #0d2137 55%, #071527 100%);
   border-color: #0d2137;
   color: #fff;
+  box-shadow: 0 10px 22px rgba(13, 33, 55, 0.28);
 }
 
 .primary-button:hover:not(:disabled) {
-  background: #16324a;
+  background: linear-gradient(135deg, #16324a 0%, #0d2137 55%, #071527 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 30px rgba(13, 33, 55, 0.34), 0 0 0 3px rgba(201, 162, 39, 0.18);
+}
+
+.primary-button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .primary-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .secondary-button {
@@ -1730,15 +1772,27 @@ async function saveProfile(payload) {
 }
 
 .secondary-button:hover:not(:disabled) {
-  border-color: #9aa9b8;
+  border-color: var(--gold-500);
+  color: #0d2137;
+  background: linear-gradient(0deg, #fffaf0, #ffffff);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(201, 162, 39, 0.18);
 }
 
+/* =========================================================
+   PANEL / CARD
+   ========================================================= */
 .panel {
   background: #fff;
-  border: 1px solid rgba(13, 33, 55, 0.08);
-  border-radius: 16px;
-  padding: 28px;
-  box-shadow: 0 12px 30px rgba(13, 33, 55, 0.06);
+  border: 1px solid var(--border-soft);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: var(--shadow-soft);
+  transition: box-shadow 0.35s ease;
+}
+
+.panel:hover {
+  box-shadow: var(--shadow-lift);
 }
 
 .muted-line {
@@ -1751,7 +1805,9 @@ async function saveProfile(payload) {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .section-title {
@@ -1761,21 +1817,22 @@ async function saveProfile(payload) {
 }
 
 .section-title-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: #0d2137;
-  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #123253, #0d2137);
+  color: var(--gold-400);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
   flex: 0 0 auto;
+  box-shadow: 0 6px 14px rgba(13, 33, 55, 0.28);
 }
 
 .panel-heading h2 {
   margin: 0 0 4px;
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 800;
 }
 
@@ -1785,6 +1842,9 @@ async function saveProfile(payload) {
   font-size: 13px;
 }
 
+/* =========================================================
+   FORM GRID / FIELDS
+   ========================================================= */
 .resident-form {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1811,19 +1871,26 @@ async function saveProfile(payload) {
 .resident-form input,
 .resident-form select {
   height: 44px;
-  padding: 0 12px;
-  border: 1px solid #d5dce5;
-  border-radius: 9px;
+  padding: 0 13px;
+  border: 1.5px solid #dde3ec;
+  border-radius: 10px;
   font-size: 14px;
   color: #0d2137;
-  background: #fff;
+  background: #fbfcfe;
   outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.resident-form input:hover,
+.resident-form select:hover {
+  border-color: #b9c3d1;
 }
 
 .resident-form input:focus,
 .resident-form select:focus {
-  border-color: #0d2137;
-  box-shadow: 0 0 0 3px rgba(13, 33, 55, 0.09);
+  border-color: var(--gold-500);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.16);
 }
 
 .resident-form select:disabled {
@@ -1831,14 +1898,17 @@ async function saveProfile(payload) {
   color: #98a2b3;
 }
 
+/* =========================================================
+   SECTION HEADERS
+   ========================================================= */
 .form-section {
   grid-column: span 2;
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 18px;
-  padding-top: 18px;
-  border-top: 1px solid rgba(13, 33, 55, 0.08);
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px dashed rgba(13, 33, 55, 0.14);
 }
 
 .form-section:first-of-type {
@@ -1848,23 +1918,27 @@ async function saveProfile(payload) {
 }
 
 .form-section-number {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: #0d2137;
-  color: #fff;
+  background: linear-gradient(135deg, var(--gold-400), var(--gold-500));
+  color: #0d2137;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 900;
   display: flex;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
+  box-shadow: 0 6px 14px rgba(201, 162, 39, 0.35);
 }
 
 .form-section h3 {
   margin: 0;
   font-size: 15px;
   font-weight: 800;
+  background: linear-gradient(90deg, #0d2137, #16324a);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 .form-section-hint {
@@ -1880,36 +1954,46 @@ async function saveProfile(payload) {
   font-size: 11px;
 }
 
+/* =========================================================
+   PHONE INPUT
+   ========================================================= */
 .phone-input-group {
   display: flex;
   align-items: center;
-  border: 1px solid #d5dce5;
-  border-radius: 9px;
+  border: 1.5px solid #dde3ec;
+  border-radius: 10px;
   overflow: hidden;
   height: 44px;
+  background: #fbfcfe;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.phone-input-group:hover {
+  border-color: #b9c3d1;
 }
 
 .phone-input-group:focus-within {
-  border-color: #0d2137;
-  box-shadow: 0 0 0 3px rgba(13, 33, 55, 0.09);
+  border-color: var(--gold-500);
+  box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.16);
 }
 
 .phone-prefix {
-  padding: 0 10px;
-  background: #f2f4f7;
-  color: #667085;
+  padding: 0 11px;
+  background: linear-gradient(135deg, #0d2137, #123253);
+  color: var(--gold-400);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   height: 100%;
   display: flex;
   align-items: center;
-  border-right: 1px solid #d5dce5;
+  border-right: 1px solid #0d2137;
 }
 
 .phone-input-group input {
   border: none;
   height: 100%;
   flex: 1;
+  background: transparent;
 }
 
 .phone-input-group input:focus {
@@ -1926,24 +2010,29 @@ async function saveProfile(payload) {
   font-weight: 600;
 }
 
+/* =========================================================
+   CONDITIONAL / SUBSECTIONS
+   ========================================================= */
 .conditional-panel {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 14px;
-  background: #f9fafb;
-  border: 1px dashed #d5dce5;
-  border-radius: 10px;
-  padding: 14px;
+  background: linear-gradient(180deg, #f9fafc, #f4f6f9);
+  border: 1px dashed #cdd6e2;
+  border-radius: 12px;
+  padding: 16px;
 }
 
 .subsection-label {
   grid-column: span 2;
   font-size: 12px;
   font-weight: 800;
-  color: #0d2137;
+  color: var(--gold-500);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   margin-top: 6px;
+  padding-left: 10px;
+  border-left: 3px solid var(--gold-500);
 }
 
 .subsection-label small {
@@ -1955,18 +2044,29 @@ async function saveProfile(payload) {
   margin-left: 6px;
 }
 
+/* =========================================================
+   FAMILY MEMBER CARDS
+   ========================================================= */
 .children-list,
 .family-members-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .family-member-card {
-  border: 1px solid #d5dce5;
-  border-radius: 12px;
-  padding: 14px;
-  background: #f9fafb;
+  border: 1px solid #e1e6ee;
+  border-radius: 14px;
+  padding: 16px;
+  background: linear-gradient(180deg, #ffffff, #f9fafc);
+  box-shadow: 0 4px 12px rgba(13, 33, 55, 0.04);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.family-member-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(13, 33, 55, 0.1);
+  border-color: rgba(201, 162, 39, 0.4);
 }
 
 .family-member-card-head {
@@ -1975,22 +2075,26 @@ async function saveProfile(payload) {
   justify-content: space-between;
   font-weight: 800;
   font-size: 13px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  color: #0d2137;
 }
 
 .child-remove {
   border: none;
   background: #fef3f2;
   color: #b42318;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   cursor: pointer;
   font-weight: 800;
+  transition: all 0.2s ease;
 }
 
 .child-remove:hover {
-  background: #fecdca;
+  background: #b42318;
+  color: #fff;
+  transform: rotate(90deg) scale(1.05);
 }
 
 .family-member-grid {
@@ -2003,47 +2107,69 @@ async function saveProfile(payload) {
 .family-member-grid select {
   height: 40px;
   padding: 0 10px;
-  border: 1px solid #d5dce5;
-  border-radius: 8px;
+  border: 1.5px solid #dde3ec;
+  border-radius: 9px;
   font-size: 13px;
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.family-member-grid input:focus,
+.family-member-grid select:focus {
+  border-color: var(--gold-500);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.14);
 }
 
 .add-family-btn {
   justify-self: start;
+  border-style: dashed;
+  border-width: 1.5px;
+}
+
+.add-family-btn:hover:not(:disabled) {
+  border-style: solid;
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
+/* =========================================================
+   ALERTS
+   ========================================================= */
 .success,
 .error {
   margin: 0 0 16px;
-  padding: 10px 14px;
-  border-radius: 8px;
+  padding: 12px 16px;
+  border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
+  border-left-width: 4px;
+  border-left-style: solid;
 }
 
 .success {
   color: #027a48;
-  background: #ecfdf3;
+  background: linear-gradient(90deg, #ecfdf3, #f4fffa);
   border: 1px solid #abefc6;
+  border-left-color: #12b76a;
 }
 
 .error {
   color: #b42318;
-  background: #fef3f2;
+  background: linear-gradient(90deg, #fef3f2, #fff6f6);
   border: 1px solid #fecdca;
+  border-left-color: #d92d20;
 }
 
 .name-duplicate-banner {
-  padding: 14px;
-  border-radius: 10px;
-  background: #fffaeb;
-  border: 1px dashed #fedf89;
+  padding: 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fffaeb, #fff6de);
+  border: 1px dashed var(--gold-500);
 }
 
 .name-duplicate-banner p {
@@ -2063,46 +2189,52 @@ async function saveProfile(payload) {
   gap: 10px;
 }
 
-/* ================= MODAL: HAKIKI TAARIFA ZANGU ================= */
-
+/* =========================================================
+   MODAL: HAKIKI TAARIFA ZANGU
+   ========================================================= */
 .review-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(13, 33, 55, 0.55);
+  background: rgba(7, 21, 39, 0.62);
+  backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
   z-index: 1000;
+  animation: fadeIn 0.2s ease;
 }
 
 .review-modal {
   background: #fff;
-  border-radius: 16px;
+  border-radius: 18px;
   max-width: 640px;
   width: 100%;
   max-height: 88vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 50px rgba(13, 33, 55, 0.25);
+  box-shadow: 0 24px 60px rgba(7, 21, 39, 0.35);
+  overflow: hidden;
+  animation: slideUp 0.25s ease;
 }
 
 .review-modal-header {
-  padding: 24px 28px 12px;
-  border-bottom: 1px solid rgba(13, 33, 55, 0.08);
+  padding: 26px 28px 16px;
+  background: linear-gradient(135deg, #0a1c30, #0d2137 55%, #123253);
+  border-bottom: 3px solid var(--gold-500);
 }
 
 .review-modal-header h2 {
   margin: 0 0 6px;
   font-size: 18px;
   font-weight: 800;
-  color: #0d2137;
+  color: #fff;
 }
 
 .review-modal-header p {
   margin: 0;
   font-size: 13px;
-  color: #667085;
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .review-modal-body {
@@ -2112,8 +2244,8 @@ async function saveProfile(payload) {
 }
 
 .review-section {
-  padding: 12px 0;
-  border-bottom: 1px dashed rgba(13, 33, 55, 0.1);
+  padding: 14px 0;
+  border-bottom: 1px dashed rgba(13, 33, 55, 0.12);
 }
 
 .review-section:last-child {
@@ -2125,15 +2257,15 @@ async function saveProfile(payload) {
   font-size: 13px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #0d2137;
+  letter-spacing: 0.05em;
+  color: var(--gold-500);
 }
 
 .review-section dl {
   margin: 0;
   display: grid;
   grid-template-columns: 40% 60%;
-  row-gap: 6px;
+  row-gap: 7px;
   column-gap: 10px;
 }
 
@@ -2148,14 +2280,26 @@ async function saveProfile(payload) {
   font-size: 13px;
   color: #0d2137;
   word-break: break-word;
+  font-weight: 600;
 }
 
 .review-modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding: 16px 28px 24px;
-  border-top: 1px solid rgba(13, 33, 55, 0.08);
+  padding: 18px 28px 26px;
+  border-top: 1px solid var(--border-soft);
+  background: #fafbfc;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @media (max-width: 780px) {
