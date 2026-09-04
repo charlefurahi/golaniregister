@@ -60,7 +60,7 @@
       <p v-if="message" class="success" role="status">{{ message }}</p>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
 
-      <form class="resident-form" @submit.prevent="saveProfile">
+      <form class="resident-form" @submit.prevent="openReviewModal">
 
         <!-- ================= SEHEMU 1: TAARIFA ZANGU BINAFSI ================= -->
         <div class="form-section">
@@ -593,13 +593,57 @@
         <!-- ================= ACTIONS ================= -->
         <div class="form-actions span-2">
           <button class="primary-button" type="submit" :disabled="saving">
-            {{ saving ? 'Inahifadhi…' : (myResidentId ? 'Sasisha Taarifa Zangu' : 'Hifadhi Taarifa Zangu') }}
+            {{ myResidentId ? 'Hakiki na Usasishe Taarifa Zangu' : 'Hakiki Taarifa Zangu Kabla ya Kuwasilisha' }}
           </button>
         </div>
 
       </form>
 
     </section>
+
+    <!-- =====================================================
+         MODAL: HAKIKI TAARIFA ZANGU KABLA YA KUWASILISHA
+         Inatokea baada ya fomu kuthibitishwa (validated), kabla
+         taarifa halisi hazijatumwa kwenye database. Mtumiaji
+         anaweza "Rudi Kuhariri" (bila kupoteza kilichojazwa) au
+         "Thibitisha na Uwasilishe" ndipo saveProfile() halisi
+         inapoitwa.
+    ====================================================== -->
+    <div
+      v-if="showReviewModal"
+      class="review-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="review-modal-title"
+    >
+      <div class="review-modal">
+        <div class="review-modal-header">
+          <h2 id="review-modal-title">Hakiki Taarifa Zangu Kabla ya Kuwasilisha</h2>
+          <p>Soma kwa makini kila sehemu hapa chini. Ukiona kosa lolote, bonyeza "Rudi Kuhariri" ili kurekebisha kabla ya kuwasilisha rasmi.</p>
+        </div>
+
+        <div class="review-modal-body">
+          <div v-for="section in reviewSections" :key="section.title" class="review-section">
+            <h3>{{ section.title }}</h3>
+            <dl>
+              <template v-for="row in section.rows" :key="row.label">
+                <dt>{{ row.label }}</dt>
+                <dd>{{ row.value }}</dd>
+              </template>
+            </dl>
+          </div>
+        </div>
+
+        <div class="review-modal-actions">
+          <button type="button" class="secondary-button" :disabled="saving" @click="closeReviewModal">
+            Rudi Kuhariri
+          </button>
+          <button type="button" class="primary-button" :disabled="saving" @click="confirmAndSave">
+            {{ saving ? 'Inahifadhi…' : 'Thibitisha na Uwasilishe' }}
+          </button>
+        </div>
+      </div>
+    </div>
 
   </main>
 </template>
@@ -632,6 +676,10 @@ const message = ref('')
 const myResidentId = ref(null)
 const guestLookupDone = ref(false) // huzuia lookup kurudiwa mara kwa mara guest anapoendelea kujaza
 
+// Modal ya "Hakiki Taarifa Zangu Kabla ya Kuwasilisha"
+const showReviewModal = ref(false)
+const reviewPayload = ref(null) // payload iliyokwisha-safishwa (cleaned), tayari kutumwa saveProfile() ikithibitishwa
+
 // Onyo la "jina linalofanana tayari limesajiliwa" (guest mode)
 const nameDuplicateInfo = ref(null) // { exists, count, phone_hint } kutoka check_name_duplicate()
 const nameDuplicateDismissed = ref(false)
@@ -639,6 +687,14 @@ const nameConfirmedSelf = ref(false)
 const nameCheckedFor = ref('') // jina lililoangaliwa mara ya mwisho, huzuia maombi ya server kwa jina lilelile
 
 const currentYear = new Date().getFullYear()
+
+const MARITAL_STATUS_LABELS = {
+  'Hajaoa/Hajaolewa': 'Sijaoa/Sijaolewa',
+  'Ameoa/Ameolewa': 'Nimeoa/Nimeolewa',
+  Mjane: 'Nimefiwa (Mjane)',
+  Mgane: 'Nimefiwa (Mgane)',
+  Talaka: 'Nimeachika (Talaka)',
+}
 
 function toUpper(value) {
   return typeof value === 'string' && value ? value.toUpperCase() : value
@@ -648,6 +704,10 @@ function upperize(target, key) {
   if (typeof target[key] === 'string' && target[key]) {
     target[key] = target[key].toUpperCase()
   }
+}
+
+function yesNo(value) {
+  return value ? 'Ndiyo' : 'Hapana'
 }
 
 const emptySpouse = () => ({
@@ -891,6 +951,19 @@ function validateResidence() {
 
   residenceError.value = ''
   return true
+}
+
+// Inaendesha uthibitisho (validation) wa nyanja zote muhimu kwa mara moja —
+// inatumika kabla ya kufungua modal ya "Hakiki Taarifa Zangu".
+function validateAllFields() {
+  const phoneOk = validatePhone()
+  const emailOk = validateEmail()
+  const residenceOk = validateResidence()
+  const emergencyPhoneOk = validateEmergencyPhone()
+  const spousePhoneOk = validateSpousePhone()
+  const spouseEmailOk = validateSpouseEmail()
+
+  return phoneOk && emailOk && residenceOk && emergencyPhoneOk && spousePhoneOk && spouseEmailOk
 }
 
 /* =========================================================
@@ -1250,66 +1323,210 @@ function dismissNameDuplicate() {
 }
 
 /* =========================================================
-   HIFADHI TAARIFA ZANGU
+   TENGENEZA PAYLOAD (bila kuihifadhi) — inatumika kwenye
+   hatua ya "Hakiki Taarifa Zangu" na pia kwenye kuwasilisha
+   halisi, ili zote mbili zitumie chanzo kimoja cha ukweli.
    ========================================================= */
 
-async function saveProfile() {
+function buildPayload() {
+  const married = isMarried.value
+  const childrenAllowed = canHaveChildren.value
+  const student = form.is_tucasa_member
+  const baptized = form.is_baptized
+
+  return {
+    full_name: toUpper((form.full_name || '').trim()),
+    gender: form.gender,
+    date_of_birth: form.date_of_birth || null,
+    marital_status: form.marital_status || null,
+    phone_number: form.phone_number || null,
+    email: (form.email || '').trim() || null,
+    residence: toUpper((form.residence || '').trim()) || null,
+
+    is_baptized: baptized,
+    baptism_year: baptized && form.baptism_year ? Number(form.baptism_year) : null,
+    baptism_place: baptized ? (toUpper((form.baptism_place || '').trim()) || null) : null,
+    church_area: baptized ? (toUpper((form.church_area || '').trim()) || null) : null,
+    ministry_group: toUpper((form.ministry_group || '').trim()) || null,
+    church_role: form.church_role || null,
+
+    spouse: married ? cleanSpouse(form.spouse) : null,
+    children: childrenAllowed ? form.children.map(cleanChild).filter((child) => child.full_name) : [],
+    family_members: cleanFamilyMembers(form.family_members),
+    emergency_contact_name: toUpper((form.emergency_contact_name || '').trim()) || null,
+    emergency_contact_phone: form.emergency_contact_phone || null,
+
+    is_tucasa_member: student,
+    institution_name: student ? (toUpper((form.institution_name || '').trim()) || null) : null,
+    occupation: toUpper((form.occupation || '').trim()) || null,
+    skills: toUpper((form.skills || '').trim()) || null,
+    special_needs: toUpper((form.special_needs || '').trim()) || null,
+  }
+}
+
+/* =========================================================
+   HAKIKI TAARIFA ZANGU (modal) — hufunguliwa fomu ikiwasilishwa,
+   BADALA ya kutuma taarifa moja kwa moja kwenye database.
+   ========================================================= */
+
+function openReviewModal() {
+  error.value = ''
+  message.value = ''
+
+  const payload = buildPayload()
+
+  if (!payload.full_name || !payload.gender) {
+    error.value = 'Jina langu kamili na jinsia yangu ni lazima.'
+    return
+  }
+
+  if (!validateAllFields()) {
+    error.value = 'Tafadhali nisahihishe taarifa zilizoangaziwa kwa nyekundu kabla ya kuendelea.'
+    return
+  }
+
+  reviewPayload.value = payload
+  showReviewModal.value = true
+}
+
+function closeReviewModal() {
+  showReviewModal.value = false
+}
+
+async function confirmAndSave() {
+  if (!reviewPayload.value) return
+  await saveProfile(reviewPayload.value)
+}
+
+// Muhtasari wa taarifa zinazoonyeshwa kwenye modal ya "Hakiki Taarifa
+// Zangu" — huundwa kutoka kwa payload ile ile itakayotumwa, ili
+// kinachoonekana ndicho hasa kitakachohifadhiwa. Nyanja tupu (null/'')
+// huondolewa ili modal isijae mistari isiyo na maana.
+const reviewSections = computed(() => {
+  const p = reviewPayload.value
+  if (!p) return []
+
+  const sections = []
+
+  sections.push({
+    title: 'Taarifa Zangu Binafsi',
+    rows: [
+      { label: 'Jina langu kamili', value: p.full_name },
+      { label: 'Jinsia yangu', value: p.gender },
+      { label: 'Tarehe ya kuzaliwa', value: p.date_of_birth },
+      { label: 'Hali yangu ya ndoa', value: MARITAL_STATUS_LABELS[p.marital_status] || p.marital_status },
+      { label: 'Namba yangu ya simu', value: p.phone_number },
+      { label: 'Barua pepe yangu', value: p.email },
+      { label: 'Anwani/Makazi yangu', value: p.residence },
+    ],
+  })
+
+  const spiritualRows = [{ label: 'Nimebatizwa?', value: yesNo(p.is_baptized) }]
+  if (p.is_baptized) {
+    spiritualRows.push(
+      { label: 'Mwaka wangu wa ubatizo', value: p.baptism_year },
+      { label: 'Kanisa nilipobatizwa', value: p.baptism_place },
+      { label: 'Ushirika wangu ulipo', value: p.church_area },
+    )
+  }
+  spiritualRows.push(
+    { label: 'Idara/Kikundi nilichopo', value: p.ministry_group },
+    { label: 'Wadhifa wangu', value: p.church_role },
+  )
+  sections.push({ title: 'Taarifa Zangu za Kiroho / Kanisa', rows: spiritualRows })
+
+  if (p.spouse) {
+    const s = p.spouse
+    const spouseRows = [
+      { label: 'Jina kamili', value: s.full_name },
+      { label: 'Jinsia', value: s.gender },
+      { label: 'Tarehe ya kuzaliwa', value: s.date_of_birth },
+      { label: 'Namba ya simu', value: s.phone_number },
+      { label: 'Barua pepe', value: s.email },
+      { label: 'Amebatizwa?', value: yesNo(s.is_baptized) },
+    ]
+    if (s.is_baptized) {
+      spouseRows.push(
+        { label: 'Mwaka wa ubatizo', value: s.baptism_year },
+        { label: 'Alipobatizwa', value: s.baptism_place },
+        { label: 'Ushirika ulipo', value: s.church_area },
+      )
+    }
+    spouseRows.push(
+      { label: 'Idara/Kikundi', value: s.ministry_group },
+      { label: 'Wadhifa', value: s.church_role },
+      { label: 'Elimu/Kazi', value: s.occupation },
+      { label: 'Vipaji/Mahususi', value: s.skills },
+      { label: 'Mahitaji Maalum', value: s.special_needs },
+    )
+    sections.push({ title: 'Mwenzi Wangu', rows: spouseRows })
+  }
+
+  p.children.forEach((child, index) => {
+    sections.push({
+      title: `Mtoto wangu #${index + 1}`,
+      rows: [
+        { label: 'Jina', value: child.full_name },
+        { label: 'Jinsia', value: child.gender },
+        { label: 'Tarehe ya kuzaliwa', value: child.date_of_birth },
+        { label: 'Namba ya simu', value: child.phone_number },
+        { label: 'Amebatizwa?', value: yesNo(child.is_baptized) },
+        { label: 'Mahitaji Maalum', value: child.special_needs },
+      ],
+    })
+  })
+
+  p.family_members.forEach((member, index) => {
+    sections.push({
+      title: `Mwanafamilia wangu #${index + 1}`,
+      rows: [
+        { label: 'Jina', value: member.full_name },
+        { label: 'Uhusiano nami', value: member.relationship },
+        { label: 'Jinsia', value: member.gender },
+        { label: 'Namba ya simu', value: member.phone_number },
+        { label: 'Mahitaji Maalum', value: member.special_needs },
+      ],
+    })
+  })
+
+  sections.push({
+    title: 'Mawasiliano ya Dharura',
+    rows: [
+      { label: 'Jina la mtu wa dharura', value: p.emergency_contact_name },
+      { label: 'Namba ya dharura', value: p.emergency_contact_phone },
+    ],
+  })
+
+  sections.push({
+    title: 'Taarifa Zangu za Ziada',
+    rows: [
+      { label: 'Ni MwanaTUCASA?', value: yesNo(p.is_tucasa_member) },
+      { label: 'Chuo ninachosoma', value: p.is_tucasa_member ? p.institution_name : null },
+      { label: 'Elimu/Kazi yangu', value: p.occupation },
+      { label: 'Vipaji/Mahususi yangu', value: p.skills },
+      { label: 'Mahitaji Maalum Yangu', value: p.special_needs },
+    ],
+  })
+
+  return sections
+    .map((section) => ({
+      ...section,
+      rows: section.rows.filter((row) => row.value !== null && row.value !== undefined && row.value !== ''),
+    }))
+    .filter((section) => section.rows.length)
+})
+
+/* =========================================================
+   HIFADHI TAARIFA ZANGU (inaitwa TU baada ya "Thibitisha na
+   Uwasilishe" kwenye modal ya hakiki)
+   ========================================================= */
+
+async function saveProfile(payload) {
   error.value = ''
   message.value = ''
   saving.value = true
 
   try {
-    const married = isMarried.value
-    const childrenAllowed = canHaveChildren.value
-    const student = form.is_tucasa_member
-    const baptized = form.is_baptized
-
-    const payload = {
-      full_name: toUpper((form.full_name || '').trim()),
-      gender: form.gender,
-      date_of_birth: form.date_of_birth || null,
-      marital_status: form.marital_status || null,
-      phone_number: form.phone_number || null,
-      email: (form.email || '').trim() || null,
-      residence: toUpper((form.residence || '').trim()) || null,
-
-      is_baptized: baptized,
-      baptism_year: baptized && form.baptism_year ? Number(form.baptism_year) : null,
-      baptism_place: baptized ? (toUpper((form.baptism_place || '').trim()) || null) : null,
-      church_area: baptized ? (toUpper((form.church_area || '').trim()) || null) : null,
-      ministry_group: toUpper((form.ministry_group || '').trim()) || null,
-      church_role: form.church_role || null,
-
-      spouse: married ? cleanSpouse(form.spouse) : null,
-      children: childrenAllowed ? form.children.map(cleanChild).filter((child) => child.full_name) : [],
-      family_members: cleanFamilyMembers(form.family_members),
-      emergency_contact_name: toUpper((form.emergency_contact_name || '').trim()) || null,
-      emergency_contact_phone: form.emergency_contact_phone || null,
-
-      is_tucasa_member: student,
-      institution_name: student ? (toUpper((form.institution_name || '').trim()) || null) : null,
-      occupation: toUpper((form.occupation || '').trim()) || null,
-      skills: toUpper((form.skills || '').trim()) || null,
-      special_needs: toUpper((form.special_needs || '').trim()) || null,
-    }
-
-    if (!payload.full_name || !payload.gender) {
-      error.value = 'Jina langu kamili na jinsia yangu ni lazima.'
-      return
-    }
-
-    const phoneOk = validatePhone()
-    const emailOk = validateEmail()
-    const residenceOk = validateResidence()
-    const emergencyPhoneOk = validateEmergencyPhone()
-    const spousePhoneOk = validateSpousePhone()
-    const spouseEmailOk = validateSpouseEmail()
-
-    if (!phoneOk || !emailOk || !residenceOk || !emergencyPhoneOk || !spousePhoneOk || !spouseEmailOk) {
-      error.value = 'Tafadhali nisahihishe taarifa zilizoangaziwa kwa nyekundu kabla ya kuendelea.'
-      return
-    }
-
     // Mshiriki wa kawaida (guest, bila akaunti): tunatumia function ya
     // Supabase register_public_member(), ambayo yenyewe hukagua kama
     // tayari kuna rekodi na phone+email hiyo hiyo — ikiwa ipo, inai-UPDATE
@@ -1369,6 +1586,7 @@ async function saveProfile() {
     error.value = err?.message || 'Hitilafu imetokea. Jaribu tena.'
   } finally {
     saving.value = false
+    showReviewModal.value = false
   }
 }
 
@@ -1845,6 +2063,101 @@ async function saveProfile() {
   gap: 10px;
 }
 
+/* ================= MODAL: HAKIKI TAARIFA ZANGU ================= */
+
+.review-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 33, 55, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.review-modal {
+  background: #fff;
+  border-radius: 16px;
+  max-width: 640px;
+  width: 100%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(13, 33, 55, 0.25);
+}
+
+.review-modal-header {
+  padding: 24px 28px 12px;
+  border-bottom: 1px solid rgba(13, 33, 55, 0.08);
+}
+
+.review-modal-header h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0d2137;
+}
+
+.review-modal-header p {
+  margin: 0;
+  font-size: 13px;
+  color: #667085;
+}
+
+.review-modal-body {
+  padding: 16px 28px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.review-section {
+  padding: 12px 0;
+  border-bottom: 1px dashed rgba(13, 33, 55, 0.1);
+}
+
+.review-section:last-child {
+  border-bottom: none;
+}
+
+.review-section h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #0d2137;
+}
+
+.review-section dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 40% 60%;
+  row-gap: 6px;
+  column-gap: 10px;
+}
+
+.review-section dt {
+  font-size: 13px;
+  font-weight: 700;
+  color: #667085;
+}
+
+.review-section dd {
+  margin: 0;
+  font-size: 13px;
+  color: #0d2137;
+  word-break: break-word;
+}
+
+.review-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 28px 24px;
+  border-top: 1px solid rgba(13, 33, 55, 0.08);
+}
+
 @media (max-width: 780px) {
   .dashboard {
     padding: 18px 16px 40px;
@@ -1860,6 +2173,21 @@ async function saveProfile() {
   .subsection-label,
   .form-section {
     grid-column: span 1;
+  }
+}
+
+@media (max-width: 560px) {
+  .review-section dl {
+    grid-template-columns: 1fr;
+    row-gap: 2px;
+  }
+
+  .review-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .review-modal-actions button {
+    width: 100%;
   }
 }
 </style>
