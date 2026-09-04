@@ -37,6 +37,31 @@
 
 
     <!-- =====================================================
+         AHSANTE (baada ya kuwasilisha kwa mafanikio)
+    ====================================================== -->
+    <section v-else-if="submittedSuccess" class="panel">
+      <div class="panel-heading">
+        <div class="section-title">
+          <div class="section-title-icon">✓</div>
+          <div>
+            <h2>Ahsante kwa ushirikiano</h2>
+            <p>{{ message || 'Taarifa zako zimehifadhiwa kwa mafanikio.' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions" style="justify-content: flex-start; gap: 12px;">
+        <button type="button" class="secondary-button" @click="$emit('logged-out')">
+          Toka
+        </button>
+        <button type="button" class="primary-button" @click="startNewRegistration">
+          Usajili Mpya
+        </button>
+      </div>
+    </section>
+
+
+    <!-- =====================================================
          FORM
     ====================================================== -->
     <section v-else class="panel">
@@ -453,7 +478,7 @@
         </template>
 
         <!-- ---------- Wanafamilia Wangu Wengine  ---------- -->
-        <div class="subsection-label span-2">Wanafamilia Wangu Wengine</div>
+        <div class="subsection-label span-2">Wanafamilia Wangu Wengine (siyo mtoto)</div>
 
         <div v-if="form.family_members.length" class="family-members-list span-2">
           <div v-for="(member, index) in form.family_members" :key="index" class="family-member-card">
@@ -685,6 +710,10 @@ const nameDuplicateInfo = ref(null) // { exists, count, phone_hint } kutoka chec
 const nameDuplicateDismissed = ref(false)
 const nameConfirmedSelf = ref(false)
 const nameCheckedFor = ref('') // jina lililoangaliwa mara ya mwisho, huzuia maombi ya server kwa jina lilelile
+
+// Inaonyesha ukurasa wa "Ahsante kwa ushirikiano" mara tu taarifa
+// zinapohifadhiwa kwa mafanikio, badala ya fomu.
+const submittedSuccess = ref(false)
 
 const currentYear = new Date().getFullYear()
 
@@ -1323,6 +1352,38 @@ function dismissNameDuplicate() {
 }
 
 /* =========================================================
+   USAJILI MPYA — kutoka ukurasa wa "Ahsante kwa ushirikiano",
+   inarudisha fomu kwenye hali yake ya awali (tupu) ili
+   aweze kujaza taarifa za mtu mwingine.
+   ========================================================= */
+
+function startNewRegistration() {
+  Object.assign(form, emptyForm())
+
+  myResidentId.value = null
+  guestLookupDone.value = false
+
+  nameDuplicateInfo.value = null
+  nameDuplicateDismissed.value = false
+  nameConfirmedSelf.value = false
+  nameCheckedFor.value = ''
+
+  phoneError.value = ''
+  emailError.value = ''
+  residenceError.value = ''
+  spousePhoneError.value = ''
+  spouseEmailError.value = ''
+  emergencyPhoneError.value = ''
+
+  reviewPayload.value = null
+  showReviewModal.value = false
+
+  message.value = ''
+  error.value = ''
+  submittedSuccess.value = false
+}
+
+/* =========================================================
    TENGENEZA PAYLOAD (bila kuihifadhi) — inatumika kwenye
    hatua ya "Hakiki Taarifa Zangu" na pia kwenye kuwasilisha
    halisi, ili zote mbili zitumie chanzo kimoja cha ukweli.
@@ -1546,6 +1607,7 @@ async function saveProfile(payload) {
         ? 'Taarifa zako zimesasishwa'
         : 'Hongera! Taarifa zako zimehifadhiwa.'
 
+      submittedSuccess.value = true
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
@@ -1563,6 +1625,7 @@ async function saveProfile(payload) {
       }
 
       message.value = 'Taarifa zangu zimesasishwa.'
+      submittedSuccess.value = true
     } else {
       const { data, error: insertError } = await supabase
         .from('residents')
@@ -1581,6 +1644,7 @@ async function saveProfile(payload) {
 
       myResidentId.value = data.id
       message.value = 'Taarifa zangu zimehifadhiwa.'
+      submittedSuccess.value = true
     }
   } catch (err) {
     error.value = err?.message || 'Hitilafu imetokea. Jaribu tena.'
