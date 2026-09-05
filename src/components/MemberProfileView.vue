@@ -1380,7 +1380,7 @@ function restoreDraftIfAny() {
   Object.assign(form, emptyForm(), draft)
 
   draftRestored.value = true
-  message.value = 'Tumepata taarifa ulizokuwa ukijaza hapo awali kabla ya kuondoka — tumezijaza tena hapa chini. Endelea kujaza, au bonyeza "Futa Nilichokuwa Nikijaza" kuanza upya.'
+  message.value = 'Endelea Ulipoishia.'
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
