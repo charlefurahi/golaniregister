@@ -85,6 +85,12 @@
       <p v-if="message" class="success" role="status">{{ message }}</p>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
 
+      <div v-if="draftRestored" class="draft-restore-actions">
+        <button type="button" class="secondary-button" @click="discardDraftAndReset">
+          Futa Nilichokuwa Nikijaza, Anza Upya
+        </button>
+      </div>
+
       <form class="resident-form" @submit.prevent="openReviewModal">
 
         <!-- ================= SEHEMU 1: TAARIFA ZANGU BINAFSI ================= -->
@@ -678,6 +684,7 @@
 
 import {
   computed,
+  onBeforeUnmount,
   onMounted,
   reactive,
   ref,
@@ -714,6 +721,11 @@ const nameCheckedFor = ref('') // jina lililoangaliwa mara ya mwisho, huzuia mao
 // Inaonyesha ukurasa wa "Ahsante kwa ushirikiano" mara tu taarifa
 // zinapohifadhiwa kwa mafanikio, badala ya fomu.
 const submittedSuccess = ref(false)
+
+// Inaonyesha kama fomu hii imejazwa upya kutoka kwa taarifa
+// zilizohifadhiwa kwenye kifaa chake (draft), baada ya kufunga tab
+// kwa bahati mbaya wakati alikuwa bado hajawasilisha.
+const draftRestored = ref(false)
 
 const currentYear = new Date().getFullYear()
 
@@ -1280,7 +1292,125 @@ async function loadMyProfile() {
   }
 }
 
-onMounted(loadMyProfile)
+/* =========================================================
+   "DRAFT" YA MUDA (LOCAL, KWENYE KIFAA CHENYEWE) — KWA
+   MSHIRIKI WA KAWAIDA (GUEST, BILA LOGIN) PEKEE.
+
+   Kusudi: kama mtu amefunga tab kwa bahati mbaya wakati bado
+   akijaza fomu (kabla ya kuwasilisha), taarifa alizokwisha jaza
+   zisipotee — badala ya kuanza upya tangu mwanzo, tunamrudishia
+   alichokuwa akijaza pale atakaporudi kwenye kivinjari kilekile.
+
+   MUHIMU: hii HAIHIFADHI chochote kwenye database/seva — ni
+   localStorage ya kivinjari chake tu, na inafutwa mara taarifa
+   zikiwasilishwa kwa mafanikio, au akichagua "Usajili Mpya" /
+   "Futa Nilichokuwa Nikijaza".
+   ========================================================= */
+
+const DRAFT_STORAGE_KEY = 'golani_member_profile_draft_v1'
+const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000 // siku 7
+
+function hasMeaningfulDraftData(source) {
+  if (!source) return false
+  return !!(
+    (source.full_name && source.full_name.trim()) ||
+    (source.phone_number && source.phone_number.trim()) ||
+    (source.email && source.email.trim())
+  )
+}
+
+function loadDraftFromStorage() {
+  if (typeof window === 'undefined' || !window.localStorage) return null
+
+  try {
+    const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY)
+    if (!raw) return null
+
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || !parsed.form) return null
+
+    if (parsed.savedAt && Date.now() - parsed.savedAt > DRAFT_MAX_AGE_MS) {
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY)
+      return null
+    }
+
+    return parsed.form
+  } catch (err) {
+    console.error('Imeshindikana kusoma taarifa zilizohifadhiwa awali (draft):', err)
+    return null
+  }
+}
+
+function saveDraftToStorage() {
+  if (!props.guestMode || submittedSuccess.value) return
+
+  if (!hasMeaningfulDraftData(form)) {
+    clearDraftFromStorage()
+    return
+  }
+
+  if (typeof window === 'undefined' || !window.localStorage) return
+
+  try {
+    window.localStorage.setItem(
+      DRAFT_STORAGE_KEY,
+      JSON.stringify({ savedAt: Date.now(), form }),
+    )
+  } catch (err) {
+    console.error('Imeshindikana kuhifadhi taarifa za muda (draft):', err)
+  }
+}
+
+function clearDraftFromStorage() {
+  if (typeof window === 'undefined' || !window.localStorage) return
+
+  try {
+    window.localStorage.removeItem(DRAFT_STORAGE_KEY)
+  } catch (err) {
+    // haina madhara kama kifaa hakiruhusu localStorage
+  }
+}
+
+function restoreDraftIfAny() {
+  if (!props.guestMode) return
+
+  const draft = loadDraftFromStorage()
+  if (!hasMeaningfulDraftData(draft)) return
+
+  Object.assign(form, emptyForm(), draft)
+
+  draftRestored.value = true
+  message.value = 'Tumepata taarifa ulizokuwa ukijaza hapo awali kabla ya kuondoka — tumezijaza tena hapa chini. Endelea kujaza, au bonyeza "Futa Nilichokuwa Nikijaza" kuanza upya.'
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function discardDraftAndReset() {
+  clearDraftFromStorage()
+  startNewRegistration()
+}
+
+let draftSaveTimer = null
+
+// Kila mara fomu inapobadilika, tunahifadhi "draft" baada ya sekunde
+// chache za utulivu (debounce) — si kwa kila herufi anayoandika.
+watch(
+  form,
+  () => {
+    if (!props.guestMode) return
+    if (draftSaveTimer) clearTimeout(draftSaveTimer)
+    draftSaveTimer = setTimeout(saveDraftToStorage, 600)
+  },
+  { deep: true },
+)
+
+onBeforeUnmount(() => {
+  if (draftSaveTimer) clearTimeout(draftSaveTimer)
+})
+
+onMounted(() => {
+  restoreDraftIfAny()
+  loadMyProfile()
+})
 
 /* =========================================================
    MSHIRIKI WA KAWAIDA (GUEST, BILA LOGIN): TAFUTA TAARIFA
@@ -1381,6 +1511,9 @@ function startNewRegistration() {
   message.value = ''
   error.value = ''
   submittedSuccess.value = false
+
+  draftRestored.value = false
+  clearDraftFromStorage()
 }
 
 /* =========================================================
@@ -1608,6 +1741,7 @@ async function saveProfile(payload) {
         : 'Hongera! Taarifa zako zimehifadhiwa.'
 
       submittedSuccess.value = true
+      clearDraftFromStorage()
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
@@ -2227,6 +2361,12 @@ async function saveProfile(payload) {
   background: linear-gradient(90deg, #fef3f2, #fff6f6);
   border: 1px solid #fecdca;
   border-left-color: #d92d20;
+}
+
+.draft-restore-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: -8px 0 16px;
 }
 
 .name-duplicate-banner {
